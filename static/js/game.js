@@ -6,7 +6,7 @@
 class GameManager {
     constructor() {
         this.isRunning = false;
-        this.gameSpeed = 1;
+        this.gameSpeed = 5; // Fixed at 5x speed
         this.tickInterval = 200; // 200ms default
         this.lastState = null;
     }
@@ -35,19 +35,7 @@ class GameManager {
     setupEventListeners() {
         // Initialize shop tabs
         uiManager.initShopTabs();
-        
-        // Speed controls
-        document.querySelectorAll('.speed-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const speed = parseInt(e.target.dataset.speed);
-                this.setSpeed(speed);
-                
-                // Update active button
-                document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-            });
-        });
-        
+
         // Reset button
         document.getElementById('reset-btn').addEventListener('click', () => {
             if (confirm('Are you sure you want to reset the game? All progress will be lost.')) {
@@ -231,9 +219,9 @@ class GameManager {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: 'reset' })
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 uiManager.showNotification('Game reset!', 'success');
                 await this.updateState();
@@ -242,15 +230,7 @@ class GameManager {
             console.error('Reset error:', e);
         }
     }
-    
-    /**
-     * Set game speed
-     */
-    setSpeed(speed) {
-        this.gameSpeed = speed;
-        console.log(`⚡ Game speed set to ${speed}x`);
-    }
-    
+
     /**
      * Toggle auto-assign mode
      */

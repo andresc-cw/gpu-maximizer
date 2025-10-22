@@ -71,6 +71,32 @@ def action():
         success, message = game.invest_in_contract(contract_id, amount)
         return jsonify({'success': success, 'message': message})
     
+    # GPU Clustering actions
+    elif action_type == 'create_cluster':
+        gpu_ids = data.get('gpu_ids', [])
+        success, result = game.create_gpu_cluster(gpu_ids)
+        if success:
+            return jsonify({'success': True, 'message': f'Cluster #{result} created', 'cluster_id': result})
+        else:
+            return jsonify({'success': False, 'message': result})
+    
+    elif action_type == 'add_to_cluster':
+        cluster_id = data.get('cluster_id')
+        gpu_id = data.get('gpu_id')
+        success, message = game.add_gpu_to_cluster(cluster_id, gpu_id)
+        return jsonify({'success': success, 'message': message})
+    
+    elif action_type == 'remove_from_cluster':
+        cluster_id = data.get('cluster_id')
+        gpu_id = data.get('gpu_id')
+        success, message = game.remove_gpu_from_cluster(cluster_id, gpu_id)
+        return jsonify({'success': success, 'message': message})
+    
+    elif action_type == 'disband_cluster':
+        cluster_id = data.get('cluster_id')
+        success, message = game.disband_cluster(cluster_id)
+        return jsonify({'success': success, 'message': message})
+    
     return jsonify({'success': False, 'message': 'Unknown action'})
 
 @app.route('/api/catalog')

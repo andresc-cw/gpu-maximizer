@@ -6,6 +6,7 @@ from .jobs import Job, JobGenerator, Scheduler
 from .economy import Economy, COOLING_TIERS, SCHEDULER_TIERS, get_network_penalty
 from .contracts import ContractManager
 from .marketing import MarketingManager
+from .clusters import ClusterManager
 
 class GameState:
     """Central game state manager"""
@@ -33,6 +34,9 @@ class GameState:
         # Marketing
         self.marketing_manager = MarketingManager()
         
+        # GPU Clusters (drag-and-drop grouping)
+        self.cluster_manager = ClusterManager()
+        
         # Note: Cooling, networking, and schedulers are now AUTO-UPGRADED
         # - Cooling: Based on GPU inventory (auto-detected)
         # - Network: Based on GPU count (auto-scales)
@@ -44,12 +48,21 @@ class GameState:
         # Timing
         self.last_update = time.time()
         self.last_job_spawn = time.time()
-        self.base_job_spawn_interval = 3.0  # Base spawn interval (modified by marketing)
-        self.job_spawn_interval = 3.0  # Actual spawn interval
+        self.base_job_spawn_interval = 2.0  # Base spawn interval (modified by marketing + GPU count) - faster for better pacing
+        self.job_spawn_interval = 2.0  # Actual spawn interval
         
         # Stats
         self.jobs_completed = 0
         self.sla_misses = 0
+        
+        # Victory & Achievements
+        self.victory_achieved = False
+        self.victory_type = None
+        self.achievements = set()
+        
+        # Events
+        self.active_event = None
+        self.last_event_check = time.time()
         
         # Buy starting GPU
         self.purchase_gpu('L4')
@@ -60,6 +73,17 @@ class GameState:
         if dt is None:
             dt = current_time - self.last_update
         self.last_update = current_time
+        
+        # Check for random events (every 60 seconds)
+        if current_time - self.last_event_check >= 60:
+            self._check_for_event()
+            self.last_event_check = current_time
+        
+        # Update active event
+        if self.active_event:
+            self.active_event['time_remaining'] -= dt
+            if self.active_event['time_remaining'] <= 0:
+                self.active_event = None
         
         # Spawn new jobs
         if current_time - self.last_job_spawn >= self.job_spawn_interval:
@@ -84,6 +108,13 @@ class GameState:
         if contract_income > 0:
             self.cash += contract_income
             self.total_revenue += contract_income
+        
+        # Check for achievements
+        self._check_achievements()
+        
+        # Check for victory conditions
+        if not self.victory_achieved:
+            self._check_victory()
     
     def _spawn_job(self):
         """Spawn a new job based on current phase"""
@@ -91,12 +122,44 @@ class GameState:
         job_value_multiplier = self.marketing_manager.get_job_value_multiplier()
         sla_extension = self.marketing_manager.get_sla_extension()
         
-        job = JobGenerator.generate_job(self.total_revenue, job_value_multiplier, sla_extension)
+        # Apply active event multipliers if any
+        if self.active_event:
+            job_value_multiplier *= self.active_event.get('value_multiplier', 1.0)
+        
+        # Get available GPU count for adaptive job generation
+        available_gpus = self._get_available_gpus()
+        available_gpu_count = len(available_gpus)
+        
+        # Generate job with awareness of current infrastructure
+        job = JobGenerator.generate_job(
+            self.total_revenue, 
+            job_value_multiplier, 
+            sla_extension,
+            available_gpu_count
+        )
         self.job_queue.append(job)
         
-        # Update job spawn interval based on marketing
+        # Update job spawn interval based on marketing AND GPU count
+        # More GPUs = more jobs needed to keep them busy
         spawn_multiplier = self.marketing_manager.get_job_spawn_multiplier()
-        self.job_spawn_interval = self.base_job_spawn_interval / spawn_multiplier
+        
+        # Dynamic scaling: More aggressive scaling for better GPU utilization
+        # Target: Keep 60-80% of GPUs busy with visible queue (3-5 jobs waiting)
+        # New formula provides faster scaling: 1 GPU = 1.5x, 5 GPUs = 4x, 10 GPUs = 7x, 50 GPUs = 20x
+        if available_gpu_count > 0:
+            # Square root scaling for more aggressive early game pacing
+            capacity_multiplier = 1.5 + (available_gpu_count ** 0.7) / 1.5
+        else:
+            capacity_multiplier = 1.0
+        
+        # Combine marketing and capacity multipliers
+        total_multiplier = spawn_multiplier * capacity_multiplier
+        
+        # Apply event multiplier if active
+        if self.active_event:
+            total_multiplier *= self.active_event.get('spawn_multiplier', 1.0)
+        
+        self.job_spawn_interval = self.base_job_spawn_interval / total_multiplier
     
     def _update_jobs(self, dt):
         """Update progress of active jobs"""
@@ -124,7 +187,7 @@ class GameState:
                 gpu.clear_job()
     
     def _schedule_jobs(self):
-        """Try to schedule waiting jobs using simple FIFO"""
+        """Try to schedule waiting jobs - now cluster-aware!"""
         if not self.job_queue or not self.gpus:
             return
         
@@ -136,29 +199,82 @@ class GameState:
         # Get current network penalty (auto-scales with GPU count)
         network_penalty = get_network_penalty(len(self.gpus))
         
-        # Use simple FIFO scheduling with available GPUs only
-        # Note: Scheduler automatically upgrades at revenue milestones
+        # New cluster-aware scheduling
         placed = []
-        for _ in range(len(self.job_queue)):
-            if Scheduler.schedule_fifo(self.job_queue, available_gpus):
-                # Find the job that was placed (has started)
-                for job in self.job_queue:
-                    if job.started_at is not None and job not in placed:
-                        placed.append(job)
-                        break
+        for job in self.job_queue[:]:  # Iterate over copy
+            if job.started_at is not None:  # Skip already placed
+                continue
+            
+            # Try to place on a cluster first (preferred)
+            cluster_placed = self._try_place_on_cluster(job, available_gpus, network_penalty)
+            
+            if not cluster_placed:
+                # Fall back to individual GPU scheduling
+                individual_placed = Scheduler.schedule_fifo([job], available_gpus)
+                if individual_placed:
+                    placed.append(job)
             else:
-                break
+                placed.append(job)
         
         # Move placed jobs to active
         for job in placed:
-            self.job_queue.remove(job)
-            self.active_jobs.append(job)
+            if job in self.job_queue:
+                self.job_queue.remove(job)
+                self.active_jobs.append(job)
+    
+    def _try_place_on_cluster(self, job, available_gpus, network_penalty):
+        """Try to place a job on a suitable cluster
+        
+        Returns True if job was placed, False otherwise
+        """
+        # Get clusters that can fit this job
+        suitable_clusters = []
+        for cluster in self.cluster_manager.clusters:
+            # Check if cluster has enough GPUs
+            if len(cluster.gpu_ids) < job.gpu_count:
+                continue
             
-            # Apply network penalty
-            if job.cross_node_penalty > 0:
-                job.cross_node_penalty = network_penalty
-                job.duration = job.base_duration / (sum(g.performance for g in job.assigned_gpus) / len(job.assigned_gpus))
-                job.duration *= (1 + network_penalty)
+            # Check if cluster is available
+            cluster_gpus = [g for g in available_gpus if g.gpu_id in cluster.gpu_ids]
+            if len(cluster_gpus) < job.gpu_count:
+                continue  # Some GPUs reserved or busy
+            
+            # Check if all GPUs are actually available
+            if not all(g.is_available() for g in cluster_gpus[:job.gpu_count]):
+                continue
+            
+            # Check VRAM
+            if not all(g.vram >= job.vram_per_gpu for g in cluster_gpus[:job.gpu_count]):
+                continue
+            
+            # This cluster can handle the job!
+            suitable_clusters.append((cluster, cluster_gpus))
+        
+        if not suitable_clusters:
+            return False
+        
+        # Prefer homogeneous clusters (all same GPU type)
+        homogeneous = [(c, gpus) for c, gpus in suitable_clusters if c.is_homogeneous(self.gpus)]
+        if homogeneous:
+            cluster, cluster_gpus = homogeneous[0]
+        else:
+            cluster, cluster_gpus = suitable_clusters[0]
+        
+        # Assign job to cluster GPUs
+        assigned_gpus = cluster_gpus[:job.gpu_count]
+        
+        # Calculate cross-node penalty (if mixed GPUs in cluster)
+        cross_penalty = 0.0
+        if job.gpu_count > 1:
+            gpu_types = [g.gpu_type for g in assigned_gpus]
+            if len(set(gpu_types)) > 1:
+                cross_penalty = network_penalty
+        
+        job.start(assigned_gpus, cross_penalty)
+        for gpu in assigned_gpus:
+            gpu.assign_job(job)
+        
+        return True
     
     def _get_available_gpus(self):
         """Get GPUs that are not reserved by contracts"""
@@ -167,6 +283,126 @@ class GameState:
             reserved_ids.update(contract.reserved_gpu_ids)
         
         return [gpu for gpu in self.gpus if gpu.gpu_id not in reserved_ids]
+    
+    def _check_for_event(self):
+        """Randomly trigger demand spike events"""
+        # Don't trigger if event already active or if too early in game
+        if self.active_event or self.total_revenue < 10000:
+            return
+        
+        # 20% chance every 60 seconds = ~1 event every 5 minutes
+        if random.random() < 0.20:
+            events = [
+                {
+                    'name': 'ChatGPT Launch Spike',
+                    'description': 'OpenAI just launched a new model! Inference demand surging!',
+                    'spawn_multiplier': 3.0,
+                    'value_multiplier': 1.5,
+                    'time_remaining': 30,
+                    'duration': 30
+                },
+                {
+                    'name': 'Training Rush',
+                    'description': 'Major AI lab needs emergency compute for deadline!',
+                    'spawn_multiplier': 2.0,
+                    'value_multiplier': 2.0,
+                    'time_remaining': 45,
+                    'duration': 45
+                },
+                {
+                    'name': 'Conference Demo Season',
+                    'description': 'NeurIPS demos this week - everyone needs inference!',
+                    'spawn_multiplier': 2.5,
+                    'value_multiplier': 1.3,
+                    'time_remaining': 60,
+                    'duration': 60
+                },
+                {
+                    'name': 'Viral AI App',
+                    'description': 'A new AI app went viral! Burst capacity needed!',
+                    'spawn_multiplier': 4.0,
+                    'value_multiplier': 1.2,
+                    'time_remaining': 20,
+                    'duration': 20
+                }
+            ]
+            self.active_event = random.choice(events)
+    
+    def _check_achievements(self):
+        """Check and unlock achievements"""
+        # GPU milestones
+        gpu_count = len(self.gpus)
+        if gpu_count >= 10 and 'gpu_10' not in self.achievements:
+            self.achievements.add('gpu_10')
+        if gpu_count >= 50 and 'gpu_50' not in self.achievements:
+            self.achievements.add('gpu_50')
+        if gpu_count >= 100 and 'gpu_100' not in self.achievements:
+            self.achievements.add('gpu_100')
+        
+        # Revenue milestones
+        if self.total_revenue >= 100000 and 'revenue_100k' not in self.achievements:
+            self.achievements.add('revenue_100k')
+        if self.total_revenue >= 500000 and 'revenue_500k' not in self.achievements:
+            self.achievements.add('revenue_500k')
+        if self.total_revenue >= 1000000 and 'revenue_1m' not in self.achievements:
+            self.achievements.add('revenue_1m')
+        
+        # SLA excellence
+        if self.jobs_completed >= 100:
+            sla_rate = 1 - (self.sla_misses / self.jobs_completed)
+            if sla_rate >= 0.95 and 'sla_champion' not in self.achievements:
+                self.achievements.add('sla_champion')
+        
+        # Efficiency
+        if len(self.gpus) > 0:
+            avg_util = sum(g.utilization for g in self.gpus) / len(self.gpus)
+            if avg_util >= 0.85 and len(self.gpus) >= 20 and 'efficiency_expert' not in self.achievements:
+                self.achievements.add('efficiency_expert')
+        
+        # PUE achievement
+        pue = Economy.get_current_pue(self.gpus)
+        if pue <= 1.25 and 'green_datacenter' not in self.achievements:
+            self.achievements.add('green_datacenter')
+        
+        # Contract achievements
+        active_contracts = len(self.contract_manager.get_active_contracts())
+        if active_contracts >= 2 and 'enterprise_player' not in self.achievements:
+            self.achievements.add('enterprise_player')
+    
+    def _check_victory(self):
+        """Check for victory conditions"""
+        # Victory Condition 1: Revenue Tycoon - Reach $5M total revenue
+        if self.total_revenue >= 5000000 and not self.victory_achieved:
+            self.victory_achieved = True
+            self.victory_type = 'revenue_tycoon'
+            return
+        
+        # Victory Condition 2: Datacenter Mogul - 200+ GPUs
+        if len(self.gpus) >= 200 and not self.victory_achieved:
+            self.victory_achieved = True
+            self.victory_type = 'datacenter_mogul'
+            return
+        
+        # Victory Condition 3: Enterprise King - All 4 major contracts active simultaneously
+        active_contract_ids = [c.contract_id for c in self.contract_manager.get_active_contracts()]
+        major_contracts = ['openai', 'meta', 'microsoft', 'anthropic']
+        if all(cid in active_contract_ids for cid in major_contracts) and not self.victory_achieved:
+            self.victory_achieved = True
+            self.victory_type = 'enterprise_king'
+            return
+        
+        # Victory Condition 4: Efficiency Master - 90%+ SLA, 80%+ utilization, PUE < 1.25, 50+ GPUs
+        if (len(self.gpus) >= 50 and 
+            self.jobs_completed >= 200 and
+            not self.victory_achieved):
+            sla_rate = 1 - (self.sla_misses / self.jobs_completed)
+            avg_util = sum(g.utilization for g in self.gpus) / len(self.gpus)
+            pue = Economy.get_current_pue(self.gpus)
+            
+            if sla_rate >= 0.90 and avg_util >= 0.80 and pue <= 1.25:
+                self.victory_achieved = True
+                self.victory_type = 'efficiency_master'
+                return
     
     def purchase_gpu(self, gpu_type):
         """Purchase a new GPU (cooling costs auto-bundled)"""
@@ -255,6 +491,34 @@ class GameState:
         """Toggle between auto and manual job assignment"""
         self.auto_assign = not self.auto_assign
         return self.auto_assign
+    
+    def create_gpu_cluster(self, gpu_ids):
+        """Create a new GPU cluster from dragged GPUs"""
+        # Validate GPUs exist and are not reserved
+        available_gpu_ids = [g.gpu_id for g in self._get_available_gpus()]
+        for gpu_id in gpu_ids:
+            if gpu_id not in available_gpu_ids:
+                return False, f"GPU #{gpu_id} is not available (reserved or doesn't exist)"
+        
+        success, result = self.cluster_manager.create_cluster(gpu_ids, self.gpus)
+        return success, result
+    
+    def add_gpu_to_cluster(self, cluster_id, gpu_id):
+        """Drag a GPU onto an existing cluster"""
+        # Check if GPU is available
+        available_gpu_ids = [g.gpu_id for g in self._get_available_gpus()]
+        if gpu_id not in available_gpu_ids:
+            return False, "GPU is not available"
+        
+        return self.cluster_manager.add_gpu_to_cluster(cluster_id, gpu_id, self.gpus)
+    
+    def remove_gpu_from_cluster(self, cluster_id, gpu_id):
+        """Drag a GPU out of a cluster"""
+        return self.cluster_manager.remove_gpu_from_cluster(cluster_id, gpu_id)
+    
+    def disband_cluster(self, cluster_id):
+        """Disband an entire cluster"""
+        return self.cluster_manager.disband_cluster(cluster_id)
     
     def start_contract_negotiation(self, contract_id):
         """Start negotiating a contract"""
@@ -365,7 +629,15 @@ class GameState:
             },
             'unlocks': self._get_unlocks(),
             'contracts': self.contract_manager.to_dict(self),
-            'marketing': self.marketing_manager.to_dict()
+            'marketing': self.marketing_manager.to_dict(),
+            'achievements': list(self.achievements),
+            'victory': {
+                'achieved': self.victory_achieved,
+                'type': self.victory_type
+            },
+            'active_event': self.active_event,
+            'clusters': self.cluster_manager.to_dict(self.gpus),
+            'unclustered_gpus': self.cluster_manager.get_unclustered_gpus(self.gpus)
         }
     
     def _get_unlocks(self):

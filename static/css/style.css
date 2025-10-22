@@ -292,12 +292,15 @@ body {
 }
 
 .gpu-bar {
-    background: rgba(45, 53, 97, 0.6);
-    padding: 12px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    border: 1px solid #2d3561;
-    transition: all 0.3s ease;
+    background: linear-gradient(135deg, rgba(45, 53, 97, 0.7) 0%, rgba(30, 40, 70, 0.6) 100%);
+    padding: 14px;
+    padding-left: 52px; /* Make room for drag handle */
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 2px solid rgba(45, 53, 97, 0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .gpu-header {
@@ -1281,5 +1284,864 @@ body {
     color: #8b5cf6;
     font-size: 1.2em;
     font-weight: bold;
+}
+
+/* Event Banner */
+#event-banner {
+    background: linear-gradient(135deg, #ff6b00 0%, #ff9500 100%);
+    border: 3px solid #ffa500;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin: 0 0 20px 0;
+    box-shadow: 0 0 30px rgba(255, 165, 0, 0.5);
+    animation: eventPulse 2s ease-in-out infinite;
+}
+
+@keyframes eventPulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(255, 165, 0, 0.5); }
+    50% { box-shadow: 0 0 50px rgba(255, 165, 0, 0.8); }
+}
+
+.event-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 1.1em;
+}
+
+.event-icon {
+    font-size: 2em;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.event-name {
+    font-weight: bold;
+    color: white;
+}
+
+.event-description {
+    color: #ffe5cc;
+    flex: 1;
+}
+
+.event-timer {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: white;
+}
+
+/* Achievement Notifications */
+#achievement-notifications {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.achievement-notification {
+    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+    border: 2px solid #c084fc;
+    border-radius: 10px;
+    padding: 15px 20px;
+    min-width: 300px;
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    animation: achievementSlideIn 0.5s ease-out, achievementFadeOut 0.5s ease-in 4.5s forwards;
+    pointer-events: auto;
+}
+
+@keyframes achievementSlideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes achievementFadeOut {
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+.achievement-icon {
+    font-size: 2.5em;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+}
+
+.achievement-text {
+    flex: 1;
+}
+
+.achievement-title {
+    font-size: 0.9em;
+    color: #e9d5ff;
+    margin-bottom: 2px;
+}
+
+.achievement-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 3px;
+}
+
+.achievement-description {
+    font-size: 0.9em;
+    color: #ddd6fe;
+}
+
+/* Victory Screen */
+#victory-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: victoryFadeIn 0.5s ease-out;
+}
+
+@keyframes victoryFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.victory-content {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 4px solid #ffd700;
+    border-radius: 20px;
+    padding: 40px 60px;
+    max-width: 600px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(255, 215, 0, 0.6);
+    animation: victoryBounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes victoryBounceIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.victory-icon {
+    font-size: 5em;
+    margin-bottom: 20px;
+    animation: victoryRotate 2s ease-in-out infinite;
+}
+
+@keyframes victoryRotate {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
+
+.victory-title {
+    font-size: 3em;
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.victory-name {
+    font-size: 2em;
+    color: #0fffff;
+    margin-bottom: 15px;
+}
+
+.victory-description {
+    font-size: 1.2em;
+    color: #a855f7;
+    margin-bottom: 10px;
+}
+
+.victory-message {
+    font-size: 1.1em;
+    color: #e0e0e0;
+    margin-bottom: 25px;
+    font-style: italic;
+}
+
+.victory-stats {
+    background: rgba(15, 255, 255, 0.1);
+    border: 2px solid #0fffff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.victory-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.victory-stat:last-child {
+    border-bottom: none;
+}
+
+.victory-stat-label {
+    color: #a0a0a0;
+}
+
+.victory-stat-value {
+    color: #0fffff;
+    font-weight: bold;
+}
+
+.victory-continue {
+    background: linear-gradient(135deg, #0fffff 0%, #00cccc 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 15px 40px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #1a1a2e;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.victory-continue:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(15, 255, 255, 0.6);
+}
+
+/* Multi-GPU Job Coordination */
+.job-card[data-coordination="matched"] {
+    border-left: 3px solid #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.05) 100%);
+}
+
+.job-card[data-coordination="mixed"] {
+    border-left: 3px solid #f59e0b;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%);
+}
+
+.job-card.syncing {
+    animation: syncFlash 0.5s ease-out;
+}
+
+@keyframes syncFlash {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.4);
+    }
+}
+
+.multi-gpu-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+.multi-gpu-indicator.matched {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid #10b981;
+}
+
+.multi-gpu-indicator.mixed {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid #f59e0b;
+}
+
+.multi-gpu-indicator .sync-icon {
+    animation: rotate360 2s linear infinite;
+}
+
+@keyframes rotate360 {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.gpu-link-indicator {
+    display: inline-block;
+    color: #10b981;
+    font-size: 0.9em;
+    margin: 0 4px;
+}
+
+/* GPU Bar enhancements for multi-GPU jobs */
+.gpu-bar[data-multi-gpu="true"] {
+    border: 2px solid rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.gpu-bar[data-multi-gpu="true"].syncing {
+    border-color: #10b981;
+    animation: gpuSyncPulse 0.5s ease-out;
+}
+
+@keyframes gpuSyncPulse {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+    }
+}
+
+.job-perf-bonus {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    margin-left: 6px;
+    font-weight: bold;
+}
+
+.job-perf-penalty {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    margin-left: 6px;
+    font-weight: bold;
+}
+
+/* GPU Cluster Cards */
+.cluster-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.12) 100%);
+    border: 3px solid rgba(16, 185, 129, 0.6);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 18px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.cluster-card::before {
+    content: '🔗';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 1), rgba(5, 150, 105, 1));
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 1.2em;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.cluster-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+    border-color: #10b981;
+}
+
+.cluster-card.drag-over {
+    border-color: #10b981;
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.9);
+    transform: scale(1.04) translateY(-4px);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.35) 0%, rgba(5, 150, 105, 0.25) 100%);
+    animation: clusterDragPulse 0.6s ease-in-out infinite;
+}
+
+.cluster-card.drag-over .cluster-drop-hint {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-color: #10b981;
+    font-weight: bold;
+    animation: hintGlow 0.6s ease-in-out infinite;
+}
+
+.cluster-card.drag-invalid {
+    border-color: #ef4444;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.7);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.15) 100%);
+    animation: shake 0.4s ease-in-out;
+}
+
+@keyframes clusterDragPulse {
+    0%, 100% { 
+        box-shadow: 0 0 35px rgba(16, 185, 129, 0.9); 
+    }
+    50% { 
+        box-shadow: 0 0 50px rgba(16, 185, 129, 1); 
+    }
+}
+
+@keyframes hintGlow {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.cluster-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.cluster-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #10b981;
+}
+
+.cluster-disband-btn {
+    background: rgba(239, 68, 68, 0.2);
+    border: 2px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cluster-disband-btn:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border-color: #ef4444;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+}
+
+.cluster-info {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.cluster-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cluster-stat-label {
+    font-size: 0.85em;
+    color: #a0a0a0;
+}
+
+.cluster-stat-value {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #10b981;
+}
+
+.cluster-gpus {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.cluster-gpu-chip {
+    background: rgba(15, 255, 255, 0.2);
+    border: 2px solid rgba(15, 255, 255, 0.5);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #0fffff;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(15, 255, 255, 0.2);
+}
+
+.cluster-gpu-chip:hover {
+    background: rgba(15, 255, 255, 0.3);
+    border-color: #0fffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 255, 255, 0.4);
+}
+
+.cluster-gpu-remove {
+    background: rgba(239, 68, 68, 0.2);
+    border: 2px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.2s ease;
+    font-size: 1.1em;
+}
+
+.cluster-gpu-remove:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border-color: #ef4444;
+    transform: scale(1.2) rotate(90deg);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+}
+
+.cluster-drop-hint {
+    font-size: 0.9em;
+    color: #888;
+    text-align: center;
+    padding: 12px;
+    border: 2px dashed rgba(16, 185, 129, 0.4);
+    border-radius: 8px;
+    margin-top: 12px;
+    background: rgba(16, 185, 129, 0.05);
+    transition: all 0.3s ease;
+}
+
+.cluster-drop-hint::before {
+    content: '⬇️ ';
+    opacity: 0.7;
+}
+
+/* GPU Drag Handle */
+.gpu-drag-handle {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 32px;
+    height: 32px;
+    background: rgba(15, 255, 255, 0.15);
+    border: 2px solid rgba(15, 255, 255, 0.5);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #0fffff;
+    cursor: grab;
+    z-index: 10;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: bold;
+    letter-spacing: -2px;
+    user-select: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.gpu-drag-handle:hover {
+    background: rgba(15, 255, 255, 0.3);
+    border-color: #0fffff;
+    transform: scale(1.15);
+    box-shadow: 0 0 20px rgba(15, 255, 255, 0.6), 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.gpu-drag-handle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+    background: rgba(15, 255, 255, 0.4);
+}
+
+.gpu-type-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(168, 85, 247, 0.3);
+    border: 1px solid #a855f7;
+    color: #a855f7;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: bold;
+    z-index: 5;
+}
+
+/* Drag and Drop States - Additional styling */
+
+.gpu-bar[draggable="true"] {
+    cursor: grab;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gpu-bar[draggable="true"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(15, 255, 255, 0.4);
+    border-color: rgba(15, 255, 255, 0.8);
+}
+
+.gpu-bar[draggable="true"]:hover .gpu-drag-handle {
+    animation: wiggle 0.6s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+    0%, 100% { transform: rotate(0deg) scale(1.15); }
+    25% { transform: rotate(-5deg) scale(1.15); }
+    75% { transform: rotate(5deg) scale(1.15); }
+}
+
+.gpu-bar.dragging {
+    opacity: 0.5;
+    transform: scale(0.95) rotate(3deg);
+    cursor: grabbing;
+    box-shadow: 0 12px 40px rgba(15, 255, 255, 0.6);
+    z-index: 1000;
+    border-color: #0fffff;
+}
+
+/* Drop target highlighting when dragging */
+.gpu-bar.drop-target-match {
+    border-color: rgba(16, 185, 129, 0.8);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.1) 100%);
+    animation: matchPulse 1s ease-in-out infinite;
+    transform: translateY(-2px);
+}
+
+.gpu-bar.drop-target-match::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 3px dashed rgba(16, 185, 129, 0.6);
+    border-radius: 12px;
+    pointer-events: none;
+    animation: dashRotate 20s linear infinite;
+    z-index: 1;
+}
+
+.gpu-bar.drop-target-match::after {
+    content: '✨ Drop here to create cluster';
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+}
+
+@keyframes matchPulse {
+    0%, 100% { 
+        border-color: rgba(16, 185, 129, 0.6);
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    }
+    50% { 
+        border-color: rgba(16, 185, 129, 1);
+        box-shadow: 0 0 35px rgba(16, 185, 129, 0.8);
+    }
+}
+
+@keyframes dashRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.gpu-bar.drag-over {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.2) 100%);
+    box-shadow: 0 0 40px rgba(16, 185, 129, 1);
+    transform: scale(1.08) translateY(-4px);
+    animation: dragPulse 0.6s ease-in-out infinite;
+    z-index: 100;
+}
+
+.gpu-bar.drag-over::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 4px solid #10b981;
+    border-radius: 14px;
+    pointer-events: none;
+    animation: borderPulse 0.6s ease-in-out infinite;
+    z-index: 1;
+}
+
+.gpu-bar.drag-over::after {
+    content: '✅ Release to cluster!';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 30;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.7);
+}
+
+.gpu-bar.drag-invalid {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.2) 100%);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
+    cursor: not-allowed;
+    animation: shake 0.4s ease-in-out;
+}
+
+.gpu-bar.drag-invalid::after {
+    content: '✕ Different GPU type - cannot cluster';
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes dragPulse {
+    0%, 100% { 
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.8); 
+        transform: scale(1.08) translateY(-4px);
+    }
+    50% { 
+        box-shadow: 0 0 50px rgba(16, 185, 129, 1); 
+        transform: scale(1.1) translateY(-5px);
+    }
+}
+
+@keyframes borderPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+}
+
+.gpu-bar[data-clustered="true"] {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+/* Notification animations */
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+/* Tutorial Hint */
+.tutorial-hint {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border: 3px dashed rgba(168, 85, 247, 0.6);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    font-size: 1em;
+    color: #e8e8e8;
+    animation: hintPulse 2.5s ease-in-out infinite;
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.tutorial-hint::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.1), transparent);
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+.tutorial-hint strong {
+    color: #c084fc;
+    font-weight: 700;
+}
+
+.tutorial-hint em {
+    color: #0fffff;
+    font-style: normal;
+    font-weight: bold;
+    text-shadow: 0 0 8px rgba(15, 255, 255, 0.5);
+}
+
+@keyframes hintPulse {
+    0%, 100% { 
+        border-color: rgba(168, 85, 247, 0.5);
+        box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
+    }
+    50% { 
+        border-color: rgba(168, 85, 247, 0.9);
+        box-shadow: 0 6px 20px rgba(168, 85, 247, 0.3);
+    }
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    50%, 100% { left: 100%; }
 }
 

@@ -5,13 +5,14 @@
 
 class UIManager {
     constructor() {
-        this.lastJobCount = 0;
         this.lastCompletedCount = 0;
         this.catalog = null;
         this.jobCards = new Map(); // Track job cards by ID to avoid recreation
         this.gpuBars = new Map(); // Track GPU bars by ID
         this.lastShopState = null; // Track last shop state to avoid unnecessary re-renders
         this.currentShopTab = 'gpus'; // Track active shop tab
+        this.shownAchievements = new Set(); // Track which achievements have been shown
+        this.victoryShown = false; // Track if victory screen has been shown
     }
     
     /**
@@ -76,7 +77,9 @@ class UIManager {
         this.updateSystemInfo(state);
         this.updatePhaseIndicator(state);
         this.updateAutoAssignToggle(state);
-        this.checkAchievements(state);
+        this.updateEvent(state);
+        this.updateAchievements(state);
+        this.updateVictory(state);
     }
     
     /**
@@ -275,6 +278,22 @@ class UIManager {
                     progressFill.style.width = `${(job.progress * 100).toFixed(1)}%`;
                 }
                 
+                // Update sync status for multi-GPU jobs
+                if (job.is_multi_gpu) {
+                    if (job.is_syncing) {
+                        if (!cardInfo.element.classList.contains('syncing')) {
+                            cardInfo.element.classList.add('syncing');
+                            // Remove class after animation
+                            setTimeout(() => {
+                                cardInfo.element.classList.remove('syncing');
+                            }, 500);
+                        }
+                    }
+                    
+                    // Update coordination attribute
+                    cardInfo.element.dataset.coordination = job.gpu_coordination;
+                }
+                
                 // Update SLA status if changed
                 if (job.sla_missed && !cardInfo.element.classList.contains('sla-missed')) {
                     cardInfo.element.classList.add('sla-missed');
@@ -295,13 +314,40 @@ class UIManager {
         card.className = `job-card ${job.type}`;
         if (job.sla_missed) card.classList.add('sla-missed');
         
+        // Set multi-GPU coordination data attribute
+        if (job.is_multi_gpu && job.gpu_coordination) {
+            card.dataset.coordination = job.gpu_coordination;
+        }
+        
         // If jobIds is provided, use it; otherwise use single job id
         const dataJobIds = jobIds || [job.id];
+        
+        // Generate multi-GPU indicator
+        let multiGpuIndicator = '';
+        if (job.is_multi_gpu && showProgress) {
+            const coordType = job.gpu_coordination === 'matched' ? 'matched' : 'mixed';
+            const coordIcon = job.gpu_coordination === 'matched' ? '🔗' : '⚠️';
+            const coordText = job.gpu_coordination === 'matched' ? 'Synced' : 'Mixed';
+            const perfIndicator = job.performance_multiplier && job.performance_multiplier > 1 
+                ? `<span class="job-perf-bonus">+${((job.performance_multiplier - 1) * 100).toFixed(0)}%</span>`
+                : (job.performance_multiplier < 1 
+                    ? `<span class="job-perf-penalty">${((job.performance_multiplier - 1) * 100).toFixed(0)}%</span>`
+                    : '');
+            
+            multiGpuIndicator = `
+                <span class="multi-gpu-indicator ${coordType}">
+                    <span class="sync-icon">${coordIcon}</span>
+                    ${coordText}
+                </span>
+                ${perfIndicator}
+            `;
+        }
         
         card.innerHTML = `
             <div class="job-header">
                 <span class="job-type">${job.type.charAt(0).toUpperCase() + job.type.slice(1)}</span>
                 <span class="job-size">${job.size} (${job.gpu_count} GPU${job.gpu_count > 1 ? 's' : ''})</span>
+                ${multiGpuIndicator}
                 ${count > 1 ? `<span class="job-count-badge">×${count}</span>` : ''}
             </div>
             <div class="job-customer">
@@ -348,6 +394,19 @@ class UIManager {
             emptyMsg.remove();
         }
         
+        // Render clusters first (using cluster manager)
+        if (window.clusterManager && state.clusters) {
+            clusterManager.renderClusters(state);
+        }
+        
+        // Get list of clustered GPU IDs to hide them
+        const clusteredGpuIds = new Set();
+        if (state.clusters && state.clusters.clusters) {
+            state.clusters.clusters.forEach(cluster => {
+                cluster.gpu_ids.forEach(id => clusteredGpuIds.add(id));
+            });
+        }
+        
         // Create a set of current GPU IDs
         const currentGpuIds = new Set(state.gpus.map(g => g.id));
         
@@ -361,16 +420,45 @@ class UIManager {
         
         // Update or create bars for current GPUs
         state.gpus.forEach(gpu => {
+            const isInCluster = clusteredGpuIds.has(gpu.id);
             let barInfo = this.gpuBars.get(gpu.id);
-            
+
             if (!barInfo) {
                 // Create new GPU bar
-                const bar = this.createGPUBar(gpu);
+                const bar = this.createGPUBar(gpu, isInCluster);
                 rackContainer.appendChild(bar);
-                this.gpuBars.set(gpu.id, { element: bar });
+                this.gpuBars.set(gpu.id, { element: bar, wasInCluster: isInCluster });
+
+                // Make draggable if not in cluster and cluster manager exists
+                if (!isInCluster && window.clusterManager) {
+                    const updatedBar = clusterManager.makeGPUDraggable(bar, gpu.id, gpu.type, false);
+                    if (updatedBar !== bar) {
+                        this.gpuBars.set(gpu.id, { element: updatedBar, wasInCluster: isInCluster });
+                    }
+                }
             } else {
-                // Update existing bar
-                this.updateGPUBar(barInfo.element, gpu);
+                // Check if clustered state changed - if so, recreate the bar
+                const wasInCluster = barInfo.wasInCluster || false;
+
+                if (wasInCluster !== isInCluster) {
+                    // Clustered state changed - recreate the bar
+                    barInfo.element.remove();
+
+                    const bar = this.createGPUBar(gpu, isInCluster);
+                    rackContainer.appendChild(bar);
+                    this.gpuBars.set(gpu.id, { element: bar, wasInCluster: isInCluster });
+
+                    // Make draggable if not in cluster and cluster manager exists
+                    if (!isInCluster && window.clusterManager) {
+                        const updatedBar = clusterManager.makeGPUDraggable(bar, gpu.id, gpu.type, false);
+                        if (updatedBar !== bar) {
+                            this.gpuBars.set(gpu.id, { element: updatedBar, wasInCluster: isInCluster });
+                        }
+                    }
+                } else {
+                    // Just update existing bar
+                    this.updateGPUBar(barInfo.element, gpu, isInCluster);
+                }
             }
         });
     }
@@ -378,18 +466,27 @@ class UIManager {
     /**
      * Create a GPU utilization bar
      */
-    createGPUBar(gpu) {
+    createGPUBar(gpu, isInCluster = false) {
         const bar = document.createElement('div');
         bar.className = 'gpu-bar';
         bar.dataset.gpuId = gpu.id;
+        bar.dataset.gpuType = gpu.type;
+        
+        if (isInCluster) {
+            bar.dataset.clustered = "true";
+            bar.style.opacity = '0.4';
+            bar.style.cursor = 'not-allowed';
+        }
         
         const utilPercent = (gpu.utilization * 100).toFixed(0);
         
         bar.innerHTML = `
+            ${!isInCluster ? '<div class="gpu-drag-handle" title="Drag to cluster with other GPUs">⋮⋮</div>' : ''}
             <div class="gpu-header">
-                <span class="gpu-name">${gpu.name} #${gpu.id}</span>
+                <span class="gpu-name">${isInCluster ? '📦 ' : ''}${gpu.name} #${gpu.id}</span>
                 <span class="gpu-vram">${gpu.vram_used}/${gpu.vram} GB VRAM</span>
             </div>
+            <div class="gpu-type-badge" data-gpu-type="${gpu.type}">${gpu.type}</div>
             <div class="gpu-utilization-bar">
                 <div class="gpu-utilization-fill ${utilPercent > 80 ? 'high' : ''}" 
                      style="width: ${utilPercent}%"></div>
@@ -403,8 +500,17 @@ class UIManager {
     /**
      * Update an existing GPU bar (avoid recreating DOM)
      */
-    updateGPUBar(barElement, gpu) {
+    updateGPUBar(barElement, gpu, isInCluster = false) {
         const utilPercent = (gpu.utilization * 100).toFixed(0);
+        
+        // Update clustered state
+        if (isInCluster) {
+            barElement.dataset.clustered = "true";
+            barElement.style.opacity = '0.4';
+        } else {
+            barElement.dataset.clustered = "false";
+            barElement.style.opacity = '1';
+        }
         
         // Update VRAM display
         const vramSpan = barElement.querySelector('.gpu-vram');
@@ -809,14 +915,7 @@ class UIManager {
             toggleBtn.classList.toggle('active', state.auto_assign);
         }
     }
-    
-    /**
-     * Check for achievements and show notifications
-     */
-    checkAchievements(state) {
-        // TODO: Implement achievement system
-    }
-    
+
     /**
      * Show a notification message
      */
@@ -1004,6 +1103,181 @@ class UIManager {
             modal.remove();
         }
     }
+    
+    /**
+     * Update active event banner
+     */
+    updateEvent(state) {
+        const eventBanner = document.getElementById('event-banner');
+        
+        if (state.active_event) {
+            const event = state.active_event;
+            eventBanner.style.display = 'block';
+            
+            eventBanner.querySelector('.event-name').textContent = event.name;
+            eventBanner.querySelector('.event-description').textContent = event.description;
+            
+            const timeRemaining = Math.ceil(event.time_remaining);
+            eventBanner.querySelector('.event-timer').textContent = `${timeRemaining}s remaining`;
+        } else {
+            eventBanner.style.display = 'none';
+        }
+    }
+    
+    /**
+     * Update and display achievement notifications
+     */
+    updateAchievements(state) {
+        if (!state.achievements) return;
+        
+        const ACHIEVEMENT_DEFS = {
+            'gpu_10': { name: 'Small Cluster', description: 'Own 10 GPUs', icon: '🖥️' },
+            'gpu_50': { name: 'Medium Datacenter', description: 'Own 50 GPUs', icon: '🏢' },
+            'gpu_100': { name: 'Large Scale Infrastructure', description: 'Own 100 GPUs', icon: '🏭' },
+            'revenue_100k': { name: 'First $100K', description: 'Earn $100,000 total revenue', icon: '💰' },
+            'revenue_500k': { name: 'Half Million', description: 'Earn $500,000 total revenue', icon: '💵' },
+            'revenue_1m': { name: 'Millionaire', description: 'Earn $1,000,000 total revenue', icon: '💎' },
+            'sla_champion': { name: 'SLA Champion', description: '95%+ SLA compliance over 100 jobs', icon: '🏆' },
+            'efficiency_expert': { name: 'Efficiency Expert', description: '85%+ utilization with 20+ GPUs', icon: '⚡' },
+            'green_datacenter': { name: 'Green Datacenter', description: 'Achieve PUE of 1.25 or lower', icon: '🌱' },
+            'enterprise_player': { name: 'Enterprise Player', description: 'Have 2+ active contracts', icon: '🤝' }
+        };
+        
+        // Check for new achievements
+        state.achievements.forEach(achievementId => {
+            if (!this.shownAchievements.has(achievementId)) {
+                this.shownAchievements.add(achievementId);
+                this.showAchievementNotification(achievementId, ACHIEVEMENT_DEFS[achievementId]);
+            }
+        });
+    }
+    
+    /**
+     * Show achievement notification popup
+     */
+    showAchievementNotification(achievementId, achievement) {
+        if (!achievement) return;
+        
+        const container = document.getElementById('achievement-notifications');
+        
+        const notification = document.createElement('div');
+        notification.className = 'achievement-notification';
+        notification.innerHTML = `
+            <div class="achievement-icon">${achievement.icon}</div>
+            <div class="achievement-text">
+                <div class="achievement-title">Achievement Unlocked!</div>
+                <div class="achievement-name">${achievement.name}</div>
+                <div class="achievement-description">${achievement.description}</div>
+            </div>
+        `;
+        
+        container.appendChild(notification);
+        
+        // Play sound if available
+        if (window.audioManager) {
+            audioManager.playSound('achievement');
+        }
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+    
+    /**
+     * Update victory screen
+     */
+    updateVictory(state) {
+        if (!state.victory || !state.victory.achieved || this.victoryShown) return;
+        
+        this.victoryShown = true;
+        this.showVictoryScreen(state);
+    }
+    
+    /**
+     * Show victory screen
+     */
+    showVictoryScreen(state) {
+        const VICTORY_DEFS = {
+            'revenue_tycoon': {
+                name: 'Revenue Tycoon',
+                description: 'Reached $5,000,000 total revenue!',
+                icon: '👑',
+                message: 'You\'ve built a massively profitable GPU empire!'
+            },
+            'datacenter_mogul': {
+                name: 'Datacenter Mogul',
+                description: 'Built a 200+ GPU datacenter!',
+                icon: '🏰',
+                message: 'Your datacenter rivals the biggest cloud providers!'
+            },
+            'enterprise_king': {
+                name: 'Enterprise King',
+                description: 'All 4 major contracts active simultaneously!',
+                icon: '🎖️',
+                message: 'OpenAI, Meta, Microsoft, AND Anthropic trust your infrastructure!'
+            },
+            'efficiency_master': {
+                name: 'Efficiency Master',
+                description: '90%+ SLA, 80%+ utilization, PUE < 1.25 with 50+ GPUs!',
+                icon: '🌟',
+                message: 'You\'ve mastered the art of datacenter optimization!'
+            }
+        };
+        
+        const victoryType = state.victory.type;
+        const victoryInfo = VICTORY_DEFS[victoryType];
+        
+        if (!victoryInfo) return;
+        
+        const victoryScreen = document.getElementById('victory-screen');
+        victoryScreen.style.display = 'flex';
+        
+        victoryScreen.querySelector('.victory-icon').textContent = victoryInfo.icon;
+        victoryScreen.querySelector('.victory-name').textContent = victoryInfo.name;
+        victoryScreen.querySelector('.victory-description').textContent = victoryInfo.description;
+        victoryScreen.querySelector('.victory-message').textContent = victoryInfo.message;
+        
+        // Build stats display
+        const statsHtml = `
+            <div class="victory-stat">
+                <span class="victory-stat-label">Total Revenue:</span>
+                <span class="victory-stat-value">$${this.formatNumber(state.total_revenue)}</span>
+            </div>
+            <div class="victory-stat">
+                <span class="victory-stat-label">Total GPUs:</span>
+                <span class="victory-stat-value">${state.stats.total_gpus}</span>
+            </div>
+            <div class="victory-stat">
+                <span class="victory-stat-label">Jobs Completed:</span>
+                <span class="victory-stat-value">${state.stats.jobs_completed}</span>
+            </div>
+            <div class="victory-stat">
+                <span class="victory-stat-label">SLA Compliance:</span>
+                <span class="victory-stat-value">${state.stats.sla_compliance.toFixed(1)}%</span>
+            </div>
+            <div class="victory-stat">
+                <span class="victory-stat-label">Utilization:</span>
+                <span class="victory-stat-value">${state.stats.utilization.toFixed(1)}%</span>
+            </div>
+            <div class="victory-stat">
+                <span class="victory-stat-label">PUE:</span>
+                <span class="victory-stat-value">${state.pue}</span>
+            </div>
+        `;
+        
+        victoryScreen.querySelector('.victory-stats').innerHTML = statsHtml;
+        
+        // Play sound if available
+        if (window.audioManager) {
+            audioManager.playSound('victory');
+        }
+    }
+}
+
+// Global function to close victory screen
+function closeVictoryScreen() {
+    document.getElementById('victory-screen').style.display = 'none';
 }
 
 // Global UI manager instance

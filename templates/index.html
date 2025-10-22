@@ -14,6 +14,32 @@
             <div id="phase-indicator">Phase 1: Starting Out</div>
         </header>
 
+        <!-- Active Event Banner -->
+        <div id="event-banner" style="display: none;">
+            <div class="event-content">
+                <span class="event-icon">🚀</span>
+                <span class="event-name"></span>
+                <span class="event-description"></span>
+                <span class="event-timer"></span>
+            </div>
+        </div>
+
+        <!-- Achievement Notifications -->
+        <div id="achievement-notifications"></div>
+
+        <!-- Victory Screen -->
+        <div id="victory-screen" style="display: none;">
+            <div class="victory-content">
+                <div class="victory-icon">🎉</div>
+                <h2 class="victory-title">VICTORY!</h2>
+                <h3 class="victory-name"></h3>
+                <p class="victory-description"></p>
+                <p class="victory-message"></p>
+                <div class="victory-stats"></div>
+                <button class="victory-continue" onclick="closeVictoryScreen()">Continue Playing</button>
+            </div>
+        </div>
+
         <!-- Capacity Indicator -->
         <div id="capacity-panel">
             <div class="capacity-bar-container">
@@ -88,6 +114,9 @@
             <!-- Center: GPU Rack Visualization -->
             <div id="gpu-section">
                 <h2>GPU Cluster</h2>
+                <div id="cluster-hint" class="tutorial-hint">
+                    💡 <strong>Tip:</strong> Drag a GPU onto another <em>of the same type</em> to create a cluster for multi-GPU jobs!
+                </div>
                 <div id="gpu-rack"></div>
                 <div id="system-info">
                     <div class="system-info-header">🔧 Infrastructure (Auto-Managed)</div>
@@ -136,11 +165,6 @@
 
         <!-- Controls -->
         <div id="controls">
-            <div id="speed-controls">
-                <button class="speed-btn active" data-speed="1">1x</button>
-                <button class="speed-btn" data-speed="2">2x</button>
-                <button class="speed-btn" data-speed="5">5x</button>
-            </div>
             <button id="toggle-auto-assign" class="speed-btn active">🤖 Auto: ON</button>
             <button id="reset-btn" class="danger-btn">Reset Game</button>
         </div>
@@ -150,6 +174,7 @@
     </div>
 
     <script src="/static/js/audio.js"></script>
+    <script src="/static/js/clusters.js"></script>
     <script src="/static/js/ui.js"></script>
     <script src="/static/js/game.js"></script>
 </body>

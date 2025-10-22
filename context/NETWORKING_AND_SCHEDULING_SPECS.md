@@ -78,7 +78,7 @@
 - **Basic → 10GbE:** "Multi-node jobs are way faster now!"
 - **NVLink vs InfiniBand:** "NVLink is amazing within a server, but I need InfiniBand to scale across servers."
 - **Backfill:** "I'm using idle GPUs while big jobs are reserved!"
-- **Preemption:** "Inference rush? No problem—pause those batch jobs."
+- **Preemption:** "Traffic spike? No problem—pause those batch jobs."
 
 ### Balancing
 - Unlock scheduling upgrades after experiencing pain (queue depth > 5, SLA misses > 3)

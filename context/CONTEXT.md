@@ -35,7 +35,7 @@ The experience should feel like *Universal Paperclips meets Cluster Scheduler Si
    - Buy GPUs or nodes
    - Unlock racks
    - Upgrade scheduler, network, or cooling systems
-5. Loop repeats with faster, more complex job streams and new events (heat waves, inference spikes)
+5. Loop repeats with faster, more complex job streams
 
 **Goal:** maximize profit and utilization efficiency over time.
 
@@ -172,15 +172,7 @@ Network upgrades reduce cross-node job penalties. Simple progression:
 - Balance tuned for visible progression every 1–2 minutes
 - No hard fail state—player can always recover through smarter upgrades
 
-### 4.8 Events
-
-Random timed modifiers:
-
-- **Heat Wave:** temporarily increases PUE (+0.08)
-- **Inference Rush:** doubles job spawn rate for 20 s
-- **Power Surge:** doubles electricity cost briefly
-
-### 4.9 UI & Dashboard
+### 4.8 UI & Dashboard
 
 The interface mirrors real datacenter monitoring tools (Grafana, Prometheus-style):
 
@@ -199,7 +191,6 @@ The interface mirrors real datacenter monitoring tools (Grafana, Prometheus-styl
 - GPU inventory with VRAM usage
 - Current PUE value and temperature indicator
 - Active scheduler and network tier
-- Event notifications (Heat Wave alert, etc.)
 
 **Controls (Bottom)**
 - Shop/upgrade buttons (GPUs, Cooling, Scheduler, Network)
@@ -232,7 +223,7 @@ Clear milestone-based progression for demos:
 - **Teaching:** "Multi-GPU jobs are slow! Need better networking. Power bills rising!"
 
 **Phase 3: Small Cluster (10–15 min)**
-- **Situation:** 8-16 GPUs, Large (L) training jobs appearing, first Inference Rush event
+- **Situation:** 8-16 GPUs, Large (L) training jobs appearing
 - **Goal:** Earn $200,000 total revenue
 - **Unlocks at $200K:**
   - H200 GPU ($35K)
@@ -242,7 +233,7 @@ Clear milestone-based progression for demos:
 - **Teaching:** "Backfill fills gaps! NVLink makes same-server jobs blazing fast."
 
 **Phase 4: Datacenter (15+ min)**
-- **Situation:** 20-64 GPUs, complex multi-node large jobs, frequent events
+- **Situation:** 20-64 GPUs, complex multi-node large jobs
 - **Goal:** Maximize profit/hour and GPU utilization
 - **Unlocks at $500K:**
   - Advanced Liquid Cooling ($30K) → unlocks B200 ($50K), GB200 ($70K) + PUE 1.22

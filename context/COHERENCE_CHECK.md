@@ -115,7 +115,7 @@ Electric cost ($/s) = (Σ GPU TDP × utilization / 1000) × PUE × $0.15 / 3600
 2. **Multi-GPU Slowdown (Phase 2):** "Cross-node jobs are slow—need networking!"
 3. **Power Bills (Phase 2):** "Liquid cooling reduces my power costs!"
 4. **Idle GPUs (Phase 3):** "Backfill is filling gaps while big jobs wait!"
-5. **Traffic Spikes (Phase 3-4):** "Preemption handles Inference Rush events!"
+5. **Traffic Spikes (Phase 3-4):** "Preemption handles traffic spikes!"
 6. **Intra vs Inter (Phase 3):** "NVLink is fast within servers, InfiniBand connects servers!"
 
 ---

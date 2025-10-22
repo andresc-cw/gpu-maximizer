@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU Tycoon - Datacenter Management Game</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Header -->
+        <header id="header">
+            <h1>⚡ GPU TYCOON</h1>
+            <div id="phase-indicator">Phase 1: Starting Out</div>
+        </header>
+
+        <!-- Capacity Indicator -->
+        <div id="capacity-panel">
+            <div class="capacity-bar-container">
+                <div class="capacity-labels">
+                    <span><strong>🖥️ Capacity:</strong></span>
+                    <span id="capacity-text">0 Available / 0 Reserved / 0 Total GPUs</span>
+                </div>
+                <div class="capacity-bar">
+                    <div class="capacity-bar-available" id="capacity-bar-available" style="width: 100%"></div>
+                    <div class="capacity-bar-reserved" id="capacity-bar-reserved" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Panel -->
+        <div id="metrics-panel">
+            <div class="metric-card">
+                <div class="metric-label">
+                    Cash
+                    <span class="info-icon" data-tooltip="Your available capital. Use it to buy GPUs, upgrade infrastructure, and invest in contracts. Running out? You're burning cash faster than you're earning!">ⓘ</span>
+                </div>
+                <div class="metric-value" id="cash-display">$0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">
+                    Revenue/Hour
+                    <span class="info-icon" data-tooltip="Your earnings rate from completed jobs and active contracts. Real datacenters track this to forecast profitability and make infrastructure investment decisions.">ⓘ</span>
+                </div>
+                <div class="metric-value" id="revenue-rate">$0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">
+                    GPUs
+                    <span class="info-icon" data-tooltip="Total GPU count in your cluster. Modern AI datacenters like CoreWeave scale from hundreds to tens of thousands of GPUs to meet customer demand.">ⓘ</span>
+                </div>
+                <div class="metric-value" id="gpu-count">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">
+                    Utilization
+                    <span class="info-icon" data-tooltip="Percentage of GPUs actively working on jobs. High utilization (80%+) means you're maximizing revenue. Low utilization means idle hardware burning money. Datacenters obsess over this metric!">ⓘ</span>
+                </div>
+                <div class="metric-value" id="utilization">0%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">
+                    SLA Compliance
+                    <span class="info-icon" data-tooltip="Service Level Agreement: Percentage of jobs started before their deadline. Enterprise customers like Meta demand 99%+ uptime. Miss too many SLAs and you'll lose contracts and revenue!">ⓘ</span>
+                </div>
+                <div class="metric-value" id="sla-compliance">100%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">
+                    PUE
+                    <span class="info-icon" data-tooltip="Power Usage Effectiveness: Ratio of total facility power to IT equipment power. 1.0 = perfect (impossible). 1.2-1.3 = excellent. 1.5+ = room for improvement. Lower PUE = lower electricity bills!">ⓘ</span>
+                </div>
+                <div class="metric-value" id="pue">1.45</div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="main-content">
+            <!-- Left: Job Queue -->
+            <div id="job-section">
+                <h2>Job Queue <span id="queue-count">(0)</span></h2>
+                <div id="job-queue"></div>
+                
+                <h2>Active Jobs <span id="active-count">(0)</span></h2>
+                <div id="active-jobs"></div>
+            </div>
+
+            <!-- Center: GPU Rack Visualization -->
+            <div id="gpu-section">
+                <h2>GPU Cluster</h2>
+                <div id="gpu-rack"></div>
+                <div id="system-info">
+                    <div class="system-info-header">🔧 Infrastructure (Auto-Managed)</div>
+                    <div class="system-info-item">
+                        <strong>Cooling:</strong> <span id="cooling-display">Air</span>
+                        <span class="info-icon" data-tooltip="Auto-upgrades when you buy better GPUs. No purchase needed!">ⓘ</span>
+                    </div>
+                    <div class="system-info-item">
+                        <strong>Network:</strong> <span id="network-display">Basic Ethernet (25%)</span>
+                        <span class="info-icon" data-tooltip="Auto-improves as your cluster grows. Scales with GPU count!">ⓘ</span>
+                    </div>
+                    <div class="system-info-item">
+                        <strong>Scheduler:</strong> <span id="scheduler-display">FIFO</span>
+                        <span class="info-icon" data-tooltip="Auto-unlocks at revenue milestones. Smarter algorithms over time!">ⓘ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Shop -->
+            <div id="shop-section">
+                <h2>Shop</h2>
+                
+                <!-- Shop Tabs -->
+                <div class="shop-tabs">
+                    <button class="shop-tab active" data-tab="gpus">🎮 GPUs</button>
+                    <button class="shop-tab" data-tab="marketing">📈 Marketing</button>
+                    <button class="shop-tab" data-tab="contracts">🤝 Contracts</button>
+                </div>
+                
+                <!-- Shop Content -->
+                <div class="shop-content">
+                    <div id="shop-tab-gpus" class="shop-tab-content active">
+                        <div id="gpu-shop"></div>
+                    </div>
+                    
+                    <div id="shop-tab-marketing" class="shop-tab-content">
+                        <div id="marketing-shop"></div>
+                    </div>
+                    
+                    <div id="shop-tab-contracts" class="shop-tab-content">
+                        <div id="contracts-shop"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls">
+            <div id="speed-controls">
+                <button class="speed-btn active" data-speed="1">1x</button>
+                <button class="speed-btn" data-speed="2">2x</button>
+                <button class="speed-btn" data-speed="5">5x</button>
+            </div>
+            <button id="toggle-auto-assign" class="speed-btn active">🤖 Auto: ON</button>
+            <button id="reset-btn" class="danger-btn">Reset Game</button>
+        </div>
+
+        <!-- Notifications -->
+        <div id="notification-container"></div>
+    </div>
+
+    <script src="/static/js/audio.js"></script>
+    <script src="/static/js/ui.js"></script>
+    <script src="/static/js/game.js"></script>
+</body>
+</html>
+

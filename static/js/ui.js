@@ -396,7 +396,7 @@ class UIManager {
         
         // Render clusters first (using cluster manager)
         if (window.clusterManager && state.clusters) {
-            clusterManager.renderClusters(state);
+            window.clusterManager.renderClusters(state);
         }
         
         // Get list of clustered GPU IDs to hide them
@@ -431,7 +431,7 @@ class UIManager {
 
                 // Make draggable if not in cluster and cluster manager exists
                 if (!isInCluster && window.clusterManager) {
-                    const updatedBar = clusterManager.makeGPUDraggable(bar, gpu.id, gpu.type, false);
+                    const updatedBar = window.clusterManager.makeGPUDraggable(bar, gpu.id, gpu.type, false);
                     if (updatedBar !== bar) {
                         this.gpuBars.set(gpu.id, { element: updatedBar, wasInCluster: isInCluster });
                     }
@@ -450,7 +450,7 @@ class UIManager {
 
                     // Make draggable if not in cluster and cluster manager exists
                     if (!isInCluster && window.clusterManager) {
-                        const updatedBar = clusterManager.makeGPUDraggable(bar, gpu.id, gpu.type, false);
+                        const updatedBar = window.clusterManager.makeGPUDraggable(bar, gpu.id, gpu.type, false);
                         if (updatedBar !== bar) {
                             this.gpuBars.set(gpu.id, { element: updatedBar, wasInCluster: isInCluster });
                         }

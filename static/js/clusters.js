@@ -417,7 +417,7 @@ class ClusterManager {
                     <span style="color: ${statusColor}">${statusIcon}</span>
                     GPU Cluster #${cluster.id}
                 </span>
-                <button class="cluster-disband-btn" onclick="clusterManager.disbandCluster(${cluster.id})">
+                <button class="cluster-disband-btn" onclick="window.clusterManager.disbandCluster(${cluster.id})">
                     ✕ Disband
                 </button>
             </div>
@@ -439,7 +439,7 @@ class ClusterManager {
                 ${clusterGpus.map(gpu => `
                     <div class="cluster-gpu-chip" data-gpu-id="${gpu.id}">
                         ${gpu.name.replace('NVIDIA ', '')} #${gpu.id}
-                        <button class="cluster-gpu-remove" onclick="clusterManager.removeGPUFromCluster(${cluster.id}, ${gpu.id})">
+                        <button class="cluster-gpu-remove" onclick="window.clusterManager.removeGPUFromCluster(${cluster.id}, ${gpu.id})">
                             ×
                         </button>
                     </div>
@@ -468,10 +468,10 @@ class ClusterManager {
 }
 
 // Global instance
-const clusterManager = new ClusterManager();
+window.clusterManager = new ClusterManager();
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    clusterManager.initializeDragDrop();
+    window.clusterManager.initializeDragDrop();
 });
 

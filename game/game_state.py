@@ -185,37 +185,53 @@ class GameState:
             # Free up GPUs
             for gpu in job.assigned_gpus:
                 gpu.clear_job()
+
+            # Also clear cluster busy flag if this job was running on a cluster
+            # Find any cluster that contains all assigned GPUs
+            for cluster in self.cluster_manager.clusters:
+                assigned_ids = set(g.gpu_id for g in job.assigned_gpus)
+                if assigned_ids.issubset(set(cluster.gpu_ids)):
+                    if getattr(cluster, 'current_job', None) is job:
+                        cluster.current_job = None
+                    # A job can only belong to a single cluster unit; break after clearing
+                    break
     
     def _schedule_jobs(self):
         """Try to schedule waiting jobs - now cluster-aware!"""
         if not self.job_queue or not self.gpus:
             return
-        
+
         # Get GPUs that are NOT reserved by contracts
         available_gpus = self._get_available_gpus()
         if not available_gpus:
             return
-        
+
         # Get current network penalty (auto-scales with GPU count)
         network_penalty = get_network_penalty(len(self.gpus))
-        
+
         # New cluster-aware scheduling
         placed = []
         for job in self.job_queue[:]:  # Iterate over copy
             if job.started_at is not None:  # Skip already placed
                 continue
-            
+
             # Try to place on a cluster first (preferred)
             cluster_placed = self._try_place_on_cluster(job, available_gpus, network_penalty)
-            
+
             if not cluster_placed:
                 # Fall back to individual GPU scheduling
-                individual_placed = Scheduler.schedule_fifo([job], available_gpus)
-                if individual_placed:
-                    placed.append(job)
+                # CRITICAL: Only use GPUs that are NOT in clusters for individual scheduling
+                # Clustered GPUs must only be used as complete units
+                unclustered_gpus = [gpu for gpu in available_gpus
+                                   if self.cluster_manager.get_cluster_for_gpu(gpu.gpu_id) is None]
+
+                if unclustered_gpus:
+                    individual_placed = Scheduler.schedule_fifo([job], unclustered_gpus)
+                    if individual_placed:
+                        placed.append(job)
             else:
                 placed.append(job)
-        
+
         # Move placed jobs to active
         for job in placed:
             if job in self.job_queue:
@@ -223,57 +239,70 @@ class GameState:
                 self.active_jobs.append(job)
     
     def _try_place_on_cluster(self, job, available_gpus, network_penalty):
-        """Try to place a job on a suitable cluster
-        
-        Returns True if job was placed, False otherwise
+        """Try to place a job on a suitable cluster.
+
+        New semantics: clusters function as unified units that run a single task at a time
+        using their combined VRAM. A cluster is eligible if:
+        - All member GPUs are available
+        - Total VRAM across the cluster >= job.vram_per_gpu * job.gpu_count
+
+        Returns True if job was placed, False otherwise.
         """
-        # Get clusters that can fit this job
+        # Unified cluster semantics: pooled VRAM must satisfy the job's VRAM requirement
+        # We do NOT multiply by job.gpu_count when using a cluster-as-one unit
+        required_total_vram = job.vram_per_gpu
+
         suitable_clusters = []
         for cluster in self.cluster_manager.clusters:
-            # Check if cluster has enough GPUs
-            if len(cluster.gpu_ids) < job.gpu_count:
-                continue
-            
-            # Check if cluster is available
+            # Check availability of entire cluster
             cluster_gpus = [g for g in available_gpus if g.gpu_id in cluster.gpu_ids]
-            if len(cluster_gpus) < job.gpu_count:
-                continue  # Some GPUs reserved or busy
-            
-            # Check if all GPUs are actually available
-            if not all(g.is_available() for g in cluster_gpus[:job.gpu_count]):
+            if len(cluster_gpus) != len(cluster.gpu_ids):
+                continue  # Some GPUs in cluster are reserved or missing
+
+            if not all(g.is_available() for g in cluster_gpus):
                 continue
-            
-            # Check VRAM
-            if not all(g.vram >= job.vram_per_gpu for g in cluster_gpus[:job.gpu_count]):
+
+            # Verify pooled VRAM capacity
+            total_vram = sum(g.vram for g in cluster_gpus)
+            if total_vram < required_total_vram:
                 continue
-            
-            # This cluster can handle the job!
-            suitable_clusters.append((cluster, cluster_gpus))
-        
+
+            suitable_clusters.append((cluster, cluster_gpus, total_vram))
+
         if not suitable_clusters:
             return False
-        
+
         # Prefer homogeneous clusters (all same GPU type)
-        homogeneous = [(c, gpus) for c, gpus in suitable_clusters if c.is_homogeneous(self.gpus)]
+        homogeneous = [(c, gpus, tv) for c, gpus, tv in suitable_clusters if c.is_homogeneous(self.gpus)]
         if homogeneous:
-            cluster, cluster_gpus = homogeneous[0]
+            cluster, cluster_gpus, _ = homogeneous[0]
         else:
-            cluster, cluster_gpus = suitable_clusters[0]
-        
-        # Assign job to cluster GPUs
-        assigned_gpus = cluster_gpus[:job.gpu_count]
-        
-        # Calculate cross-node penalty (if mixed GPUs in cluster)
+            cluster, cluster_gpus, _ = suitable_clusters[0]
+
+        assigned_gpus = cluster_gpus  # Use ALL cluster GPUs as a unified unit
+
+        # Cross-node penalty if mixed GPU types and multi-GPU job semantics
         cross_penalty = 0.0
-        if job.gpu_count > 1:
-            gpu_types = [g.gpu_type for g in assigned_gpus]
-            if len(set(gpu_types)) > 1:
-                cross_penalty = network_penalty
-        
+        gpu_types = [g.gpu_type for g in assigned_gpus]
+        if len(set(gpu_types)) > 1 and job.gpu_count > 1:
+            cross_penalty = network_penalty
+
+        # Start the job and distribute VRAM needs across the cluster
         job.start(assigned_gpus, cross_penalty)
-        for gpu in assigned_gpus:
-            gpu.assign_job(job)
-        
+
+        remaining = required_total_vram
+        # Greedy distribution by GPU VRAM capacity (largest first)
+        for gpu in sorted(assigned_gpus, key=lambda x: x.vram, reverse=True):
+            if remaining <= 0:
+                alloc = 0
+            else:
+                alloc = min(gpu.vram, remaining)
+            gpu.assign_job(job, vram_override=alloc)
+            remaining -= alloc
+
+        # Mark cluster as busy with this job
+        cluster.current_job = job
+
         return True
     
     def _get_available_gpus(self):
@@ -441,10 +470,10 @@ class GameState:
             if j.job_id == job_id:
                 job = j
                 break
-        
+
         if job is None:
             return False, "Job not found in queue"
-        
+
         # Find the specified GPUs
         selected_gpus = []
         for gpu_id in gpu_ids:
@@ -456,36 +485,99 @@ class GameState:
             if gpu is None:
                 return False, f"GPU #{gpu_id} not found"
             selected_gpus.append(gpu)
-        
-        # Validate: correct number of GPUs
-        if len(selected_gpus) != job.gpu_count:
-            return False, f"Job requires exactly {job.gpu_count} GPU(s), but {len(selected_gpus)} selected"
-        
+
+        # If selection corresponds to an entire cluster, allow pooled VRAM semantics
+        is_cluster_selection = False
+        selected_cluster = None
+        if gpu_ids:
+            possible_cluster = self.cluster_manager.get_cluster_for_gpu(gpu_ids[0])
+            if possible_cluster and set(gpu_ids) == set(possible_cluster.gpu_ids):
+                is_cluster_selection = True
+                selected_cluster = possible_cluster
+
+        if is_cluster_selection:
+            # Validate availability
+            cluster_gpus = [g for g in self.gpus if g.gpu_id in selected_cluster.gpu_ids]
+            if not all(g.is_available() for g in cluster_gpus):
+                return False, f"Cluster #{selected_cluster.cluster_id} is busy"
+
+            # Validate pooled VRAM
+            # For cluster-as-one, total pooled requirement equals job.vram_per_gpu
+            required_total_vram = job.vram_per_gpu
+            total_vram = sum(g.vram for g in cluster_gpus)
+            if total_vram < required_total_vram:
+                return False, f"Cluster #{selected_cluster.cluster_id} does not have enough combined VRAM ({total_vram}GB < {required_total_vram}GB)"
+        else:
+            # Validate: correct number of GPUs for non-cluster manual selection
+            if len(selected_gpus) != job.gpu_count:
+                return False, f"Job requires exactly {job.gpu_count} GPU(s), but {len(selected_gpus)} selected"
+
+        # NEW: Validate cluster integrity
+        # - If cluster selection mode, do nothing (already validated as whole cluster)
+        # - Otherwise, prevent mixing cluster GPUs with non-cluster GPUs
+        if not is_cluster_selection:
+            for gpu_id in gpu_ids:
+                cluster = self.cluster_manager.get_cluster_for_gpu(gpu_id)
+                if cluster:
+                    cluster_gpu_set = set(cluster.gpu_ids)
+                    selected_gpu_set = set(gpu_ids)
+                    if cluster_gpu_set != selected_gpu_set:
+                        missing = cluster_gpu_set - selected_gpu_set
+                        extra = selected_gpu_set - cluster_gpu_set
+                        if missing:
+                            return False, f"Cluster #{cluster.cluster_id} must be used as a complete unit. Missing GPUs: {list(missing)}"
+                        if extra:
+                            return False, f"Cannot mix cluster GPUs with non-cluster GPUs"
+
         # Validate: all GPUs are available
         for gpu in selected_gpus:
             if not gpu.is_available():
                 return False, f"GPU #{gpu.gpu_id} ({gpu.name}) is already busy"
-        
-        # Validate: all GPUs have enough VRAM
-        for gpu in selected_gpus:
-            if gpu.vram < job.vram_per_gpu:
-                return False, f"GPU #{gpu.gpu_id} ({gpu.name}) has insufficient VRAM ({gpu.vram}GB < {job.vram_per_gpu}GB required)"
-        
+
+        # Validate: VRAM
+        if is_cluster_selection:
+            pass  # pooled VRAM already validated above
+        else:
+            for gpu in selected_gpus:
+                if gpu.vram < job.vram_per_gpu:
+                    return False, f"GPU #{gpu.gpu_id} ({gpu.name}) has insufficient VRAM ({gpu.vram}GB < {job.vram_per_gpu}GB required)"
+
         # Calculate cross-node penalty (if GPUs are different types)
         cross_node_penalty = 0.0
-        if job.gpu_count > 1 and len(set(g.gpu_type for g in selected_gpus)) > 1:
-            cross_node_penalty = get_network_penalty(len(self.gpus))
-        
-        # Assign the job
-        job.start(selected_gpus, cross_node_penalty)
-        for gpu in selected_gpus:
-            gpu.assign_job(job)
-        
+        if is_cluster_selection:
+            cluster_gpus = [g for g in self.gpus if g.gpu_id in selected_cluster.gpu_ids]
+            if job.gpu_count > 1 and len(set(g.gpu_type for g in cluster_gpus)) > 1:
+                cross_node_penalty = get_network_penalty(len(self.gpus))
+            # Start the job across the entire cluster and distribute VRAM needs
+            job.start(cluster_gpus, cross_node_penalty)
+
+            required_total_vram = job.vram_per_gpu * job.gpu_count
+            remaining = required_total_vram
+            for gpu in sorted(cluster_gpus, key=lambda x: x.vram, reverse=True):
+                if remaining <= 0:
+                    alloc = 0
+                else:
+                    alloc = min(gpu.vram, remaining)
+                gpu.assign_job(job, vram_override=alloc)
+                remaining -= alloc
+
+            # Mark cluster busy
+            selected_cluster.current_job = job
+        else:
+            if job.gpu_count > 1 and len(set(g.gpu_type for g in selected_gpus)) > 1:
+                cross_node_penalty = get_network_penalty(len(self.gpus))
+
+            # Assign the job
+            job.start(selected_gpus, cross_node_penalty)
+            for gpu in selected_gpus:
+                gpu.assign_job(job)
+
         # Move job from queue to active
         self.job_queue.remove(job)
         self.active_jobs.append(job)
-        
-        return True, f"Job #{job_id} assigned to {len(selected_gpus)} GPU(s)"
+
+        target_gpu_count = len(selected_cluster.gpu_ids) if is_cluster_selection else len(selected_gpus)
+        return True, f"Job #{job_id} assigned to {target_gpu_count} GPU(s)"
     
     def toggle_auto_assign(self):
         """Toggle between auto and manual job assignment"""

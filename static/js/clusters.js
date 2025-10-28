@@ -373,15 +373,33 @@ class ClusterManager {
      * Render clusters in the GPU rack
      */
     renderClusters(state) {
-        if (!state.clusters || !state.clusters.clusters) return;
-        
         const rackContainer = document.getElementById('gpu-rack');
         if (!rackContainer) return;
-        
+
+        // Get current cluster IDs from state
+        const currentClusterIds = new Set();
+        if (state.clusters && state.clusters.clusters) {
+            state.clusters.clusters.forEach(cluster => {
+                currentClusterIds.add(cluster.id);
+            });
+        }
+
+        // Remove cluster cards that no longer exist in state
+        const existingClusterCards = document.querySelectorAll('.cluster-card');
+        existingClusterCards.forEach(card => {
+            const clusterId = parseInt(card.dataset.clusterId);
+            if (!currentClusterIds.has(clusterId)) {
+                card.remove();
+            }
+        });
+
+        // Early return if no clusters to render
+        if (!state.clusters || !state.clusters.clusters) return;
+
         // Render each cluster
         state.clusters.clusters.forEach(cluster => {
             const existingCluster = document.querySelector(`[data-cluster-id="${cluster.id}"]`);
-            
+
             if (!existingCluster) {
                 // Create new cluster card
                 const clusterCard = this.createClusterCard(cluster, state.gpus);
@@ -433,6 +451,14 @@ class ClusterManager {
                 <div class="cluster-stat">
                     <span class="cluster-stat-label">Available:</span>
                     <span class="cluster-stat-value">${cluster.available_vram}GB</span>
+                </div>
+            </div>
+            <div class="cluster-mode-info" style="margin: 8px 0; padding: 8px; background: rgba(59, 130, 246, 0.15); border-radius: 4px; font-size: 0.85em; border-left: 3px solid #3b82f6;">
+                <div style="color: #60a5fa; font-weight: 600; margin-bottom: 4px;">⚡ Unified Cluster Mode</div>
+                <div style="color: #93c5fd; font-size: 0.9em;">
+                    • Runs one task at a time using pooled VRAM<br>
+                    • GPUs cannot be used individually while clustered<br>
+                    • Selectable in manual assignment when combined VRAM fits job
                 </div>
             </div>
             <div class="cluster-gpus">

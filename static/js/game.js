@@ -288,16 +288,16 @@ class GameManager {
      */
     showJobAssignment(jobId) {
         if (!this.lastState) return;
-        
+
         // Find the job in the queue
         const job = this.lastState.job_queue.find(j => j.id === jobId);
         if (!job) {
             console.error('Job not found:', jobId);
             return;
         }
-        
-        // Show GPU selector modal
-        uiManager.showGPUSelector(job, this.lastState.gpus);
+
+        // Show GPU selector modal with clusters
+        uiManager.showGPUSelector(job, this.lastState.gpus, this.lastState.clusters);
     }
     
     /**

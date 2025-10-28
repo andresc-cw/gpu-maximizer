@@ -21,9 +21,10 @@ class GPU:
     def is_available(self):
         return self.current_job is None
     
-    def assign_job(self, job):
+    def assign_job(self, job, vram_override=None):
         self.current_job = job
-        self.vram_used = job.vram_per_gpu
+        # Allow cluster assignments to distribute memory across GPUs
+        self.vram_used = vram_override if vram_override is not None else job.vram_per_gpu
         self.utilization = 1.0
     
     def clear_job(self):

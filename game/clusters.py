@@ -98,40 +98,44 @@ class ClusterManager:
     
     def create_cluster(self, gpu_ids, all_gpus):
         """Create a new cluster from GPU IDs
-        
+
         Args:
             gpu_ids: List of GPU IDs to include
             all_gpus: List of all GPU objects to validate types
-            
+
         Returns:
             tuple: (success, cluster_id or error_message)
         """
         if not gpu_ids or len(gpu_ids) == 0:
             return False, "Need at least 2 GPUs to create cluster"
-        
+
         if len(gpu_ids) < 2:
             return False, "Need at least 2 GPUs to create cluster"
-        
+
         if len(gpu_ids) > 8:
             return False, "Maximum 8 GPUs per cluster"
-        
+
         # Check if any GPUs are already in a cluster
         for cluster in self.clusters:
             for gpu_id in gpu_ids:
                 if gpu_id in cluster.gpu_ids:
                     return False, f"GPU #{gpu_id} is already in a cluster"
-        
-        # ENFORCE SAME GPU TYPE REQUIREMENT
+
+        # Get GPU objects to validate
         cluster_gpus = [g for g in all_gpus if g.gpu_id in gpu_ids]
+
+        # Allow clustering busy GPUs: they'll wrap up current jobs, then cluster becomes available
+
+        # ENFORCE SAME GPU TYPE REQUIREMENT
         gpu_types = set(g.gpu_type for g in cluster_gpus)
-        
+
         if len(gpu_types) > 1:
             types_str = ', '.join(gpu_types)
             return False, f"Can only cluster same GPU types! ({types_str} are different)"
-        
+
         cluster = GPUCluster(gpu_ids)
         self.clusters.append(cluster)
-        
+
         gpu_type = list(gpu_types)[0] if gpu_types else 'Unknown'
         return True, cluster.cluster_id
     
@@ -141,21 +145,27 @@ class ClusterManager:
         cluster = self.get_cluster(cluster_id)
         if not cluster:
             return False, "Cluster not found"
-        
+
         # Check if GPU is already in another cluster
         for c in self.clusters:
             if gpu_id in c.gpu_ids:
                 return False, f"GPU #{gpu_id} is already in cluster #{c.cluster_id}"
-        
-        # ENFORCE SAME GPU TYPE
+
+        # Get GPU objects
         cluster_gpus = [g for g in all_gpus if g.gpu_id in cluster.gpu_ids]
         new_gpu = next((g for g in all_gpus if g.gpu_id == gpu_id), None)
-        
+
+        if not new_gpu:
+            return False, "GPU not found"
+
+        # Allow adding busy GPUs: they will finish current jobs first
+
+        # ENFORCE SAME GPU TYPE
         if cluster_gpus and new_gpu:
             existing_type = cluster_gpus[0].gpu_type
             if new_gpu.gpu_type != existing_type:
                 return False, f"Can only add {existing_type} to this cluster (tried to add {new_gpu.gpu_type})"
-        
+
         # Try to add
         if cluster.add_gpu(gpu_id):
             return True, f"Added GPU #{gpu_id} to cluster"
@@ -167,11 +177,20 @@ class ClusterManager:
         cluster = self.get_cluster(cluster_id)
         if not cluster:
             return False, "Cluster not found"
-        
+
+        # Prevent modifications while cluster is busy
+        if getattr(cluster, 'current_job', None) is not None:
+            return False, "Cannot modify a busy cluster. Wait for the current job to complete"
+
         if cluster.remove_gpu(gpu_id):
-            # If cluster is now empty, delete it
-            if len(cluster.gpu_ids) == 0:
+            # If cluster has 1 or fewer GPUs, auto-disband it
+            # (single-GPU clusters don't make sense)
+            if len(cluster.gpu_ids) <= 1:
                 self.clusters.remove(cluster)
+                if len(cluster.gpu_ids) == 1:
+                    return True, f"Removed GPU #{gpu_id} - cluster auto-disbanded (only 1 GPU remaining)"
+                else:
+                    return True, f"Removed GPU #{gpu_id} - cluster disbanded"
             return True, f"Removed GPU #{gpu_id}"
         else:
             return False, "GPU not in this cluster"
@@ -181,6 +200,10 @@ class ClusterManager:
         cluster = self.get_cluster(cluster_id)
         if not cluster:
             return False, "Cluster not found"
+
+        # Prevent disband while busy
+        if getattr(cluster, 'current_job', None) is not None:
+            return False, "Cannot disband a busy cluster. Wait for the current job to complete"
         
         self.clusters.remove(cluster)
         return True, "Cluster disbanded"

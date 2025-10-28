@@ -418,47 +418,36 @@ class UIManager {
             }
         }
         
-        // Update or create bars for current GPUs
+        // Update or create bars for current GPUs (hide those inside clusters)
         state.gpus.forEach(gpu => {
             const isInCluster = clusteredGpuIds.has(gpu.id);
             let barInfo = this.gpuBars.get(gpu.id);
 
+            // If GPU is part of a cluster, ensure its bar is removed/hidden
+            if (isInCluster) {
+                if (barInfo) {
+                    barInfo.element.remove();
+                    this.gpuBars.delete(gpu.id);
+                }
+                return; // Do not render bars for clustered GPUs
+            }
+
             if (!barInfo) {
                 // Create new GPU bar
-                const bar = this.createGPUBar(gpu, isInCluster);
+                const bar = this.createGPUBar(gpu, false);
                 rackContainer.appendChild(bar);
-                this.gpuBars.set(gpu.id, { element: bar, wasInCluster: isInCluster });
+                this.gpuBars.set(gpu.id, { element: bar, wasInCluster: false });
 
-                // Make draggable if not in cluster and cluster manager exists
-                if (!isInCluster && window.clusterManager) {
+                // Make draggable if cluster manager exists
+                if (window.clusterManager) {
                     const updatedBar = window.clusterManager.makeGPUDraggable(bar, gpu.id, gpu.type, false);
                     if (updatedBar !== bar) {
-                        this.gpuBars.set(gpu.id, { element: updatedBar, wasInCluster: isInCluster });
+                        this.gpuBars.set(gpu.id, { element: updatedBar, wasInCluster: false });
                     }
                 }
             } else {
-                // Check if clustered state changed - if so, recreate the bar
-                const wasInCluster = barInfo.wasInCluster || false;
-
-                if (wasInCluster !== isInCluster) {
-                    // Clustered state changed - recreate the bar
-                    barInfo.element.remove();
-
-                    const bar = this.createGPUBar(gpu, isInCluster);
-                    rackContainer.appendChild(bar);
-                    this.gpuBars.set(gpu.id, { element: bar, wasInCluster: isInCluster });
-
-                    // Make draggable if not in cluster and cluster manager exists
-                    if (!isInCluster && window.clusterManager) {
-                        const updatedBar = window.clusterManager.makeGPUDraggable(bar, gpu.id, gpu.type, false);
-                        if (updatedBar !== bar) {
-                            this.gpuBars.set(gpu.id, { element: updatedBar, wasInCluster: isInCluster });
-                        }
-                    }
-                } else {
-                    // Just update existing bar
-                    this.updateGPUBar(barInfo.element, gpu, isInCluster);
-                }
+                // Just update existing bar
+                this.updateGPUBar(barInfo.element, gpu, false);
             }
         });
     }
@@ -951,17 +940,44 @@ class UIManager {
     /**
      * Show GPU selection modal for a job
      */
-    showGPUSelector(job, availableGPUs) {
+    showGPUSelector(job, availableGPUs, clustersData) {
         // Create modal overlay
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
         modal.id = 'gpu-selector-modal';
-        
-        // Filter GPUs by requirements
-        const compatibleGPUs = availableGPUs.filter(gpu => 
+
+        // Get clustered GPU IDs to filter them out from individual selection
+        const clusteredGpuIds = new Set();
+        const clusters = clustersData && clustersData.clusters ? clustersData.clusters : [];
+
+        clusters.forEach(cluster => {
+            cluster.gpu_ids.forEach(id => clusteredGpuIds.add(id));
+        });
+
+        // Filter out GPUs that are already in clusters
+        const nonClusteredGPUs = availableGPUs.filter(gpu => !clusteredGpuIds.has(gpu.id));
+
+        // Filter clusters compatible with pooled VRAM semantics
+        // Unified cluster-as-one: require pooled VRAM >= job.vram_per_gpu
+        const requiredTotalVram = job.vram_per_gpu;
+        const compatibleClusters = clusters.filter(cluster => {
+            // Cluster must be entirely available and have enough pooled VRAM
+            if (!cluster.is_available) return false;
+            if ((cluster.available_vram || 0) < requiredTotalVram) return false;
+
+            // Ensure all GPUs in the cluster are present in availableGPUs (not reserved by contracts)
+            const clusterGpus = availableGPUs.filter(g => cluster.gpu_ids.includes(g.id));
+            if (clusterGpus.length !== cluster.size) return false;
+
+            // Also verify none are currently working a job
+            return clusterGpus.every(g => !g.current_job);
+        });
+
+        // Filter individual GPUs by requirements
+        const compatibleGPUs = nonClusteredGPUs.filter(gpu =>
             gpu.vram >= job.vram_per_gpu && !gpu.current_job
         );
-        const incompatibleGPUs = availableGPUs.filter(gpu => 
+        const incompatibleGPUs = nonClusteredGPUs.filter(gpu =>
             gpu.vram < job.vram_per_gpu || gpu.current_job
         );
         
@@ -986,13 +1002,39 @@ class UIManager {
                     </div>
                     
                     <div class="gpu-selection-info">
-                        <p><strong>Select ${job.gpu_count} GPU${job.gpu_count > 1 ? 's' : ''}:</strong></p>
+                        <p><strong>Select ${job.gpu_count} GPU${job.gpu_count > 1 ? 's' : ''} or a Cluster:</strong></p>
                         <p class="selection-count" id="selection-count">0 / ${job.gpu_count} selected</p>
                     </div>
-                    
+
                     <div class="gpu-list">
+                        ${compatibleClusters.length > 0 ? `
+                            <h4>🔗 Compatible Clusters (Recommended)</h4>
+                            <div class="gpu-grid">
+                                ${compatibleClusters.map(cluster => {
+                                    const clusterGpus = availableGPUs.filter(g => cluster.gpu_ids.includes(g.id));
+                                    const gpuNames = clusterGpus.map(g => g.name.replace('NVIDIA ', '')).join(', ');
+                                    const statusIcon = cluster.is_homogeneous ? '🔗' : '⚠️';
+                                    const statusText = cluster.is_homogeneous ? 'Synced' : 'Mixed';
+                                    return `
+                                    <div class="gpu-selector-card compatible cluster-card-selector" data-cluster-id="${cluster.id}">
+                                        <div class="gpu-card-header">
+                                            <span class="gpu-card-name">${statusIcon} Cluster #${cluster.id} (${cluster.size} GPUs)</span>
+                                            <input type="radio" class="cluster-radio" name="resource-selection" data-cluster-id="${cluster.id}" data-gpu-ids="${JSON.stringify(cluster.gpu_ids).replace(/"/g, '&quot;')}">
+                                        </div>
+                                        <div class="gpu-card-specs">
+                                            ${cluster.total_vram}GB Total VRAM | ${cluster.available_vram}GB Free | ${statusText}
+                                        </div>
+                                        <div class="gpu-card-specs" style="font-size: 0.85em; color: #888;">
+                                            ${gpuNames}
+                                        </div>
+                                    </div>
+                                `;
+                                }).join('')}
+                            </div>
+                        ` : ''}
+
                         ${compatibleGPUs.length > 0 ? `
-                            <h4>Compatible GPUs</h4>
+                            <h4 style="margin-top: ${compatibleClusters.length > 0 ? '20px' : '0'};">Individual GPUs</h4>
                             <div class="gpu-grid">
                                 ${compatibleGPUs.map(gpu => `
                                     <div class="gpu-selector-card compatible" data-gpu-id="${gpu.id}">
@@ -1006,9 +1048,9 @@ class UIManager {
                                     </div>
                                 `).join('')}
                             </div>
-                        ` : `
-                            <p class="no-gpus-message">No compatible GPUs available!</p>
-                        `}
+                        ` : (compatibleClusters.length === 0 ? `
+                            <p class="no-gpus-message">No compatible GPUs or clusters available!</p>
+                        ` : '')}
                         
                         ${incompatibleGPUs.length > 0 ? `
                             <h4 style="margin-top: 20px;">Incompatible GPUs</h4>
@@ -1050,16 +1092,40 @@ class UIManager {
         const cancelBtn = document.getElementById('cancel-assignment');
         const closeBtn = document.getElementById('close-gpu-selector');
         const checkboxes = modal.querySelectorAll('.gpu-checkbox');
+        const clusterRadios = modal.querySelectorAll('.cluster-radio');
         const selectionCount = document.getElementById('selection-count');
-        
+
         let selectedGPUs = [];
-        
-        // Handle checkbox changes
+
+        // Handle cluster radio button selection
+        clusterRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    // Uncheck all individual GPU checkboxes
+                    checkboxes.forEach(cb => cb.checked = false);
+
+                    // Get cluster GPU IDs from data attribute
+                    const gpuIdsStr = e.target.dataset.gpuIds;
+                    selectedGPUs = JSON.parse(gpuIdsStr);
+
+                    // Update selection count
+                    selectionCount.textContent = `Cluster selected (${selectedGPUs.length} GPUs)`;
+
+                    // Enable confirm button
+                    confirmBtn.disabled = false;
+                }
+            });
+        });
+
+        // Handle individual GPU checkbox changes
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {
                 const gpuId = parseInt(e.target.dataset.gpuId);
-                
+
                 if (e.target.checked) {
+                    // Uncheck all cluster radio buttons
+                    clusterRadios.forEach(radio => radio.checked = false);
+
                     // Check if we can add more
                     if (selectedGPUs.length < job.gpu_count) {
                         selectedGPUs.push(gpuId);
@@ -1070,10 +1136,10 @@ class UIManager {
                 } else {
                     selectedGPUs = selectedGPUs.filter(id => id !== gpuId);
                 }
-                
+
                 // Update selection count
                 selectionCount.textContent = `${selectedGPUs.length} / ${job.gpu_count} selected`;
-                
+
                 // Enable/disable confirm button
                 confirmBtn.disabled = selectedGPUs.length !== job.gpu_count;
             });

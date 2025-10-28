@@ -1,5 +1,6 @@
 """Main game state management"""
 import time
+from collections import deque
 import random
 from .gpus import GPU, GPU_CATALOG
 from .jobs import Job, JobGenerator, Scheduler
@@ -54,6 +55,8 @@ class GameState:
         # Stats
         self.jobs_completed = 0
         self.sla_misses = 0
+        # Rolling SLA history (recent jobs window)
+        self.sla_history = deque(maxlen=200)
         
         # Victory & Achievements
         self.victory_achieved = False
@@ -129,15 +132,25 @@ class GameState:
         # Get available GPU count for adaptive job generation
         available_gpus = self._get_available_gpus()
         available_gpu_count = len(available_gpus)
+
+        # Queue-aware backpressure to avoid SLA spiral when scaling
+        backlog = len(self.job_queue)
+        target_queue_depth = 3 + max(0, available_gpu_count // 4)
         
+        # Dynamic SLA extension when backlog grows
+        backlog_sla_extension = 0
+        if backlog > target_queue_depth:
+            backlog_sla_extension = min(20, (backlog - target_queue_depth) * 2)
+
         # Generate job with awareness of current infrastructure
-        job = JobGenerator.generate_job(
-            self.total_revenue, 
-            job_value_multiplier, 
-            sla_extension,
-            available_gpu_count
-        )
-        self.job_queue.append(job)
+        if backlog < target_queue_depth * 2:
+            job = JobGenerator.generate_job(
+                self.total_revenue, 
+                job_value_multiplier, 
+                sla_extension + backlog_sla_extension,
+                available_gpu_count
+            )
+            self.job_queue.append(job)
         
         # Update job spawn interval based on marketing AND GPU count
         # More GPUs = more jobs needed to keep them busy
@@ -159,7 +172,9 @@ class GameState:
         if self.active_event:
             total_multiplier *= self.active_event.get('spawn_multiplier', 1.0)
         
-        self.job_spawn_interval = self.base_job_spawn_interval / total_multiplier
+        # Apply backpressure to spawn interval (slow down when backlog is high)
+        backpressure_factor = 1.0 + max(0, backlog - target_queue_depth) * 0.2
+        self.job_spawn_interval = (self.base_job_spawn_interval * backpressure_factor) / total_multiplier
     
     def _update_jobs(self, dt):
         """Update progress of active jobs"""
@@ -181,6 +196,9 @@ class GameState:
             
             if job.is_sla_missed():
                 self.sla_misses += 1
+                self.sla_history.append(0)
+            else:
+                self.sla_history.append(1)
             
             # Free up GPUs
             for gpu in job.assigned_gpus:
@@ -197,7 +215,7 @@ class GameState:
                     break
     
     def _schedule_jobs(self):
-        """Try to schedule waiting jobs - now cluster-aware!"""
+        """Try to schedule waiting jobs - cluster-aware with EDF ordering"""
         if not self.job_queue or not self.gpus:
             return
 
@@ -209,9 +227,9 @@ class GameState:
         # Get current network penalty (auto-scales with GPU count)
         network_penalty = get_network_penalty(len(self.gpus))
 
-        # New cluster-aware scheduling
+        # New cluster-aware scheduling with earliest-deadline-first (EDF)
         placed = []
-        for job in self.job_queue[:]:  # Iterate over copy
+        for job in sorted(self.job_queue[:], key=lambda j: j.sla_deadline):
             if job.started_at is not None:  # Skip already placed
                 continue
 
@@ -680,7 +698,11 @@ class GameState:
         available_gpus = total_gpus - reserved_gpus
         
         avg_utilization = sum(g.utilization for g in self.gpus) / max(total_gpus, 1)
-        sla_compliance = 100.0 if self.jobs_completed == 0 else (1 - self.sla_misses / max(self.jobs_completed, 1)) * 100
+        # Rolling-window SLA compliance for UX-friendly pacing
+        if len(getattr(self, 'sla_history', [])) > 0:
+            sla_compliance = (sum(self.sla_history) / len(self.sla_history)) * 100.0
+        else:
+            sla_compliance = 100.0
         
         # Calculate revenue rate (per hour) - includes contract passive income
         revenue_per_hour = 0

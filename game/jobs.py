@@ -337,15 +337,15 @@ class Scheduler:
     """Simple FIFO job scheduler"""
     
     @staticmethod
-    def schedule_fifo(job_queue, gpus):
+    def schedule_fifo(job_queue, gpus, network_penalty=0.25):
         """First In First Out - simplest scheduler"""
         for job in job_queue:
-            if Scheduler._try_place_job(job, gpus):
+            if Scheduler._try_place_job(job, gpus, network_penalty):
                 return True
         return False
     
     @staticmethod
-    def _try_place_job(job, gpus):
+    def _try_place_job(job, gpus, network_penalty=0.25):
         """Try to place a job on available GPUs with enough VRAM"""
         available_gpus = [g for g in gpus if g.is_available() and g.vram >= job.vram_per_gpu]
         
@@ -356,7 +356,7 @@ class Scheduler:
             # Calculate cross-node penalty (simplified: assume penalty if not all same type)
             cross_node_penalty = 0.0
             if job.gpu_count > 1 and len(set(g.gpu_type for g in assigned)) > 1:
-                cross_node_penalty = 0.25  # Base penalty, will be modified by network upgrades
+                cross_node_penalty = network_penalty
             
             job.start(assigned, cross_node_penalty)
             for gpu in assigned:

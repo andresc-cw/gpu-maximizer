@@ -568,6 +568,8 @@ class UIManager {
             const coolingNote = spec.cooling_tier && spec.cooling_tier !== 'air' 
                 ? `<div class="shop-item-note">❄️ Includes ${this.getCoolingName(spec.cooling_tier)}</div>` 
                 : '';
+            // Estimated power cost per hour at 100% utilization
+            const estPowerCostHr = (((spec.tdp || 0) / 1000) * (state.pue || 1.45) * 0.15).toFixed(2);
             
             const item = document.createElement('div');
             item.className = 'shop-item';
@@ -579,6 +581,9 @@ class UIManager {
                 </div>
                 <div class="shop-item-specs">
                     ${spec.vram}GB VRAM | ${spec.tdp}W TDP | ${spec.performance}x perf
+                    <div style="color:#9ca3af; font-size:0.8em; margin-top:4px;">
+                        Est. power cost/hr @100%: $${estPowerCostHr} (PUE ${(state.pue || 1.45).toFixed(2)})
+                    </div>
                 </div>
                 ${coolingNote}
                 ${spec.description ? `<div class="shop-item-description">${spec.description}</div>` : ''}

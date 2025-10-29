@@ -77,6 +77,43 @@ class GameManager {
                 }
             }
         });
+
+        // Speed controls and audio toggle
+        const setActive = (id) => {
+            const container = document.getElementById('speed-controls');
+            if (!container) return;
+            container.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+            const el = document.getElementById(id);
+            if (el) el.classList.add('active');
+        };
+
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => {
+                if (this.isRunning) {
+                    this.stop();
+                    pauseBtn.textContent = '▶️ Resume';
+                } else {
+                    this.start();
+                    pauseBtn.textContent = '⏸️ Pause';
+                }
+            });
+        }
+
+        const speed1 = document.getElementById('speed-1x');
+        if (speed1) speed1.addEventListener('click', () => { this.gameSpeed = 1; setActive('speed-1x'); });
+        const speed2 = document.getElementById('speed-2x');
+        if (speed2) speed2.addEventListener('click', () => { this.gameSpeed = 2; setActive('speed-2x'); });
+        const speed5 = document.getElementById('speed-5x');
+        if (speed5) speed5.addEventListener('click', () => { this.gameSpeed = 5; setActive('speed-5x'); });
+
+        const audioToggle = document.getElementById('audio-toggle');
+        if (audioToggle) {
+            audioToggle.addEventListener('click', () => {
+                const enabled = audioManager.toggle();
+                audioToggle.textContent = enabled ? '🔊 Audio: ON' : '🔇 Audio: OFF';
+            });
+        }
     }
     
     /**

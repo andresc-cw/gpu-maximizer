@@ -244,7 +244,7 @@ class GameState:
                                    if self.cluster_manager.get_cluster_for_gpu(gpu.gpu_id) is None]
 
                 if unclustered_gpus:
-                    individual_placed = Scheduler.schedule_fifo([job], unclustered_gpus)
+                    individual_placed = Scheduler.schedule_fifo([job], unclustered_gpus, network_penalty)
                     if individual_placed:
                         placed.append(job)
             else:
@@ -569,13 +569,11 @@ class GameState:
             # Start the job across the entire cluster and distribute VRAM needs
             job.start(cluster_gpus, cross_node_penalty)
 
-            required_total_vram = job.vram_per_gpu * job.gpu_count
+            # Cluster-as-one semantics: pooled VRAM must cover vram_per_gpu (not multiplied by gpu_count)
+            required_total_vram = job.vram_per_gpu
             remaining = required_total_vram
             for gpu in sorted(cluster_gpus, key=lambda x: x.vram, reverse=True):
-                if remaining <= 0:
-                    alloc = 0
-                else:
-                    alloc = min(gpu.vram, remaining)
+                alloc = min(gpu.vram, remaining) if remaining > 0 else 0
                 gpu.assign_job(job, vram_override=alloc)
                 remaining -= alloc
 

@@ -1,15 +1,42 @@
 """Flask application for GPU Tycoon"""
-from flask import Flask, render_template, jsonify, request
+import os
+import secrets
+from flask import Flask, render_template, jsonify, request, session
 from flask_cors import CORS
 from game.game_state import GameState
 from game.gpus import GPU_CATALOG
 from game.economy import COOLING_TIERS, SCHEDULER_TIERS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 
-# Global game state (in-memory, single player)
-game = GameState()
+# Session configuration
+app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 7  # 7 days
+
+# Store game states per session (in-memory)
+# In production, you might want to use Redis or a database
+game_sessions = {}
+MAX_SESSIONS = 100  # Limit to prevent memory issues
+
+def get_game_state():
+    """Get or create game state for current session"""
+    if 'session_id' not in session:
+        session['session_id'] = secrets.token_hex(16)
+        session.permanent = True
+    
+    session_id = session['session_id']
+    
+    if session_id not in game_sessions:
+        # Simple cleanup: remove oldest sessions if we hit the limit
+        if len(game_sessions) >= MAX_SESSIONS:
+            oldest_session = next(iter(game_sessions))
+            del game_sessions[oldest_session]
+        
+        game_sessions[session_id] = GameState()
+    
+    return game_sessions[session_id]
 
 @app.route('/')
 def index():
@@ -19,6 +46,7 @@ def index():
 @app.route('/api/state')
 def get_state():
     """Get current game state"""
+    game = get_game_state()
     return jsonify(game.to_dict())
 
 @app.route('/api/tick', methods=['POST'])
@@ -27,12 +55,14 @@ def tick():
     data = request.json or {}
     dt = data.get('dt', 0.2)  # Default 200ms
     
+    game = get_game_state()
     game.update(dt)
     return jsonify({'success': True})
 
 @app.route('/api/action', methods=['POST'])
 def action():
     """Handle player actions (purchases)"""
+    game = get_game_state()
     data = request.json
     action_type = data.get('type')
     

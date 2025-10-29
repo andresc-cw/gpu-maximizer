@@ -60,7 +60,7 @@ def tick():
     
     game = get_game_state()
     game.update(dt)
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'state': game.to_dict()})
 
 @app.route('/api/action', methods=['POST'])
 def action():

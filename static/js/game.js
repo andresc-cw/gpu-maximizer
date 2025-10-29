@@ -9,6 +9,7 @@ class GameManager {
         this.gameSpeed = 5; // Fixed at 5x speed
         this.tickInterval = 200; // 200ms default
         this.lastState = null;
+        this.lastTickTs = null; // For speed-aware dt based on elapsed time
     }
     
     /**
@@ -167,6 +168,7 @@ class GameManager {
         if (this.isRunning) return;
         
         this.isRunning = true;
+        this.lastTickTs = performance.now();
         this.gameLoop();
     }
     
@@ -183,11 +185,12 @@ class GameManager {
     async gameLoop() {
         if (!this.isRunning) return;
         
-        // Send tick to server
-        await this.tick();
-        
-        // Fetch and update state
-        await this.updateState();
+        // Send tick to server and update state in one call
+        const state = await this.tick();
+        if (state) {
+            uiManager.update(state);
+            this.lastState = state;
+        }
         
         // Update speed indicator if it exists
         const speedIndicator = document.getElementById('speed-indicator');
@@ -205,15 +208,34 @@ class GameManager {
      */
     async tick() {
         try {
-            const dt = this.tickInterval / 1000; // Always send the same dt, regardless of speed
-            await fetch('/api/tick', {
+            // Compute dt based on elapsed real time scaled by speed
+            const now = performance.now();
+            let baseDtSec;
+            if (this.lastTickTs != null) {
+                baseDtSec = (now - this.lastTickTs) / 1000;
+            } else {
+                baseDtSec = this.tickInterval / 1000;
+            }
+            this.lastTickTs = now;
+
+            let dt = baseDtSec * this.gameSpeed;
+            // Clamp dt to avoid huge jumps if the tab was throttled
+            const maxDt = 0.5; // seconds
+            if (dt > maxDt) dt = maxDt;
+
+            const response = await fetch('/api/tick', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ dt })
             });
+            const result = await response.json();
+            if (result && result.success) {
+                return result.state;
+            }
         } catch (e) {
             console.error('Tick error:', e);
         }
+        return null;
     }
     
     /**

@@ -14,6 +14,9 @@ CORS(app, supports_credentials=True)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 7  # 7 days
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True if using HTTPS in production
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # Store game states per session (in-memory)
 # In production, you might want to use Redis or a database
@@ -137,6 +140,16 @@ def get_catalog():
         # For display purposes only (not purchasable)
         'cooling_info': COOLING_TIERS,
         'scheduler_info': SCHEDULER_TIERS
+    })
+
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint for debugging"""
+    return jsonify({
+        'status': 'healthy',
+        'session_id': session.get('session_id', 'none'),
+        'active_sessions': len(game_sessions),
+        'has_game_state': session.get('session_id') in game_sessions if 'session_id' in session else False
     })
 
 if __name__ == '__main__':

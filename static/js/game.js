@@ -33,15 +33,22 @@ class GameManager {
      * Set up button click handlers
      */
     setupEventListeners() {
+        console.log('🔧 Setting up event listeners...');
+        
         // Initialize shop tabs
         uiManager.initShopTabs();
 
         // Reset button
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            if (confirm('Are you sure you want to reset the game? All progress will be lost.')) {
-                this.resetGame();
-            }
-        });
+        const resetBtn = document.getElementById('reset-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to reset the game? All progress will be lost.')) {
+                    this.resetGame();
+                }
+            });
+        } else {
+            console.warn('⚠️ Reset button not found');
+        }
         
         // Toggle auto-assign button
         document.getElementById('toggle-auto-assign').addEventListener('click', async () => {
@@ -101,13 +108,48 @@ class GameManager {
         }
 
         const speed1 = document.getElementById('speed-1x');
-        if (speed1) speed1.addEventListener('click', () => { this.gameSpeed = 1; setActive('speed-1x'); });
+        if (speed1) {
+            speed1.addEventListener('click', () => { 
+                this.gameSpeed = 1; 
+                setActive('speed-1x'); 
+                console.log('⚡ Speed set to 1x');
+            });
+        } else {
+            console.warn('⚠️ speed-1x button not found');
+        }
+        
         const speed2 = document.getElementById('speed-2x');
-        if (speed2) speed2.addEventListener('click', () => { this.gameSpeed = 2; setActive('speed-2x'); });
+        if (speed2) {
+            speed2.addEventListener('click', () => { 
+                this.gameSpeed = 2; 
+                setActive('speed-2x'); 
+                console.log('⚡ Speed set to 2x');
+            });
+        } else {
+            console.warn('⚠️ speed-2x button not found');
+        }
+        
         const speed5 = document.getElementById('speed-5x');
-        if (speed5) speed5.addEventListener('click', () => { this.gameSpeed = 5; setActive('speed-5x'); });
+        if (speed5) {
+            speed5.addEventListener('click', () => { 
+                this.gameSpeed = 5; 
+                setActive('speed-5x'); 
+                console.log('⚡ Speed set to 5x');
+            });
+        } else {
+            console.warn('⚠️ speed-5x button not found');
+        }
+        
         const speed20 = document.getElementById('speed-20x');
-        if (speed20) speed20.addEventListener('click', () => { this.gameSpeed = 20; setActive('speed-20x'); });
+        if (speed20) {
+            speed20.addEventListener('click', () => { 
+                this.gameSpeed = 20; 
+                setActive('speed-20x'); 
+                console.log('⚡ Speed set to 20x');
+            });
+        } else {
+            console.warn('⚠️ speed-20x button not found');
+        }
 
         const audioToggle = document.getElementById('audio-toggle');
         if (audioToggle) {
@@ -146,6 +188,12 @@ class GameManager {
         
         // Fetch and update state
         await this.updateState();
+        
+        // Update speed indicator if it exists
+        const speedIndicator = document.getElementById('speed-indicator');
+        if (speedIndicator) {
+            speedIndicator.textContent = `${this.gameSpeed}x`;
+        }
         
         // Schedule next tick based on speed
         const delay = this.tickInterval / this.gameSpeed;

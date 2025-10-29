@@ -106,6 +106,8 @@ class GameManager {
         if (speed2) speed2.addEventListener('click', () => { this.gameSpeed = 2; setActive('speed-2x'); });
         const speed5 = document.getElementById('speed-5x');
         if (speed5) speed5.addEventListener('click', () => { this.gameSpeed = 5; setActive('speed-5x'); });
+        const speed20 = document.getElementById('speed-20x');
+        if (speed20) speed20.addEventListener('click', () => { this.gameSpeed = 20; setActive('speed-20x'); });
 
         const audioToggle = document.getElementById('audio-toggle');
         if (audioToggle) {

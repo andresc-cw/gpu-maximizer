@@ -46,11 +46,12 @@ class GameState:
         # Job assignment mode
         self.auto_assign = True  # Start with automation (Paperclips style)
         
-        # Timing
-        self.last_update = time.time()
-        self.last_job_spawn = time.time()
+        # Timing - use game time instead of wall clock for speed consistency
+        self.game_time = 0.0  # Accumulated game time
+        self.last_job_spawn_time = 0.0  # Game time of last job spawn
         self.base_job_spawn_interval = 2.0  # Base spawn interval (modified by marketing + GPU count) - faster for better pacing
         self.job_spawn_interval = 2.0  # Actual spawn interval
+        self.last_event_check_time = 0.0  # Game time of last event check
         
         # Stats
         self.jobs_completed = 0
@@ -65,22 +66,23 @@ class GameState:
         
         # Events
         self.active_event = None
-        self.last_event_check = time.time()
         
         # Buy starting GPU
         self.purchase_gpu('L4')
     
     def update(self, dt=None):
         """Update game state"""
-        current_time = time.time()
+        # Use passed dt or default to a small timestep
         if dt is None:
-            dt = current_time - self.last_update
-        self.last_update = current_time
+            dt = 0.2
         
-        # Check for random events (every 60 seconds)
-        if current_time - self.last_event_check >= 60:
+        # Accumulate game time (for speed-independent timing)
+        self.game_time += dt
+        
+        # Check for random events (every 60 seconds of game time)
+        if self.game_time - self.last_event_check_time >= 60:
             self._check_for_event()
-            self.last_event_check = current_time
+            self.last_event_check_time = self.game_time
         
         # Update active event
         if self.active_event:
@@ -88,10 +90,10 @@ class GameState:
             if self.active_event['time_remaining'] <= 0:
                 self.active_event = None
         
-        # Spawn new jobs
-        if current_time - self.last_job_spawn >= self.job_spawn_interval:
+        # Spawn new jobs (based on game time)
+        if self.game_time - self.last_job_spawn_time >= self.job_spawn_interval:
             self._spawn_job()
-            self.last_job_spawn = current_time
+            self.last_job_spawn_time = self.game_time
         
         # Update active jobs
         self._update_jobs(dt)

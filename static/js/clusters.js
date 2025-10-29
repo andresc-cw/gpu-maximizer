@@ -483,10 +483,11 @@ class ClusterManager {
      * Update an existing cluster card
      */
     updateClusterCard(cardElement, cluster, allGpus) {
-        // Update VRAM stats
+        // Update VRAM stats (only if changed to avoid DOM thrashing)
         const totalVramEl = cardElement.querySelector('.cluster-stat-value');
-        if (totalVramEl) {
-            totalVramEl.textContent = `${cluster.total_vram}GB`;
+        const newVramText = `${cluster.total_vram}GB`;
+        if (totalVramEl && totalVramEl.textContent !== newVramText) {
+            totalVramEl.textContent = newVramText;
         }
         
         // Could add more dynamic updates here

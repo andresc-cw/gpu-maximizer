@@ -13,10 +13,8 @@
             <div class="header-brand">
                 <h1>⚡ CoreWeave TYCOON</h1>
             </div>
-            <div id="phase-indicator">Phase 1: Starting Out</div>
             <div id="sticker-layer">
                 <div class="sticker sticker-lfg">#LFG</div>
-                <div class="sticker sticker-cw">#CoreWeave</div>
                 <div class="sticker sticker-gpu">#GPU</div>
             </div>
         </header>
@@ -121,8 +119,14 @@
             <!-- Center: GPU Rack Visualization -->
             <div id="gpu-section">
                 <h2>GPU Cluster</h2>
-                <div id="cluster-hint" class="tutorial-hint">
+                <div id="cluster-hint" class="tutorial-hint" style="display: none;">
                     💡 <strong>Tip:</strong> Drag a GPU onto another <em>of the same type</em> to create a cluster for multi-GPU jobs!
+                </div>
+                <div id="utilization-hint" class="tutorial-hint" style="display: none;">
+                    📊 <strong>Low Utilization?</strong> Your GPUs are idle! Try investing in <em>Marketing</em> to attract more jobs, or reduce GPU count.
+                </div>
+                <div id="sla-hint" class="tutorial-hint" style="display: none;">
+                    ⚠️ <strong>Missing SLAs?</strong> Jobs are waiting too long! Add more <em>GPUs</em> or create <em>clusters</em> to handle large jobs faster.
                 </div>
                 <div id="gpu-rack"></div>
                 <div id="system-info">
@@ -177,9 +181,11 @@
                 <button id="speed-1x" class="speed-btn">1x</button>
                 <button id="speed-2x" class="speed-btn">2x</button>
                 <button id="speed-5x" class="speed-btn active">5x</button>
+                <button id="speed-20x" class="speed-btn" title="Demo mode - 20x speed!">⚡ 20x</button>
             </div>
             <button id="audio-toggle" class="speed-btn">🔊 Audio: ON</button>
             <button id="toggle-auto-assign" class="speed-btn active">🤖 Auto: ON</button>
+            <button onclick="showWelcomeModal()" class="speed-btn">❓ Help</button>
             <button id="reset-btn" class="danger-btn">Reset Game</button>
         </div>
 
@@ -255,6 +261,7 @@
     </div>
 
     <script src="/static/js/audio.js"></script>
+    <script src="/static/js/education.js"></script>
     <script src="/static/js/clusters.js"></script>
     <script src="/static/js/ui.js"></script>
     <script src="/static/js/game.js"></script>

@@ -75,11 +75,15 @@ class UIManager {
         this.updateGPUs(state);
         this.updateShop(state);
         this.updateSystemInfo(state);
-        this.updatePhaseIndicator(state);
         this.updateAutoAssignToggle(state);
         this.updateEvent(state);
         this.updateAchievements(state);
         this.updateVictory(state);
+        
+        // Check for educational milestones
+        if (window.educationManager) {
+            educationManager.checkMilestones(state);
+        }
     }
     
     /**
@@ -492,19 +496,23 @@ class UIManager {
     updateGPUBar(barElement, gpu, isInCluster = false) {
         const utilPercent = (gpu.utilization * 100).toFixed(0);
         
-        // Update clustered state
-        if (isInCluster) {
-            barElement.dataset.clustered = "true";
-            barElement.style.opacity = '0.4';
-        } else {
-            barElement.dataset.clustered = "false";
-            barElement.style.opacity = '1';
+        // Update clustered state (only if changed to avoid interrupting hover states)
+        const currentClustered = barElement.dataset.clustered === "true";
+        if (isInCluster !== currentClustered) {
+            if (isInCluster) {
+                barElement.dataset.clustered = "true";
+                barElement.style.opacity = '0.4';
+            } else {
+                barElement.dataset.clustered = "false";
+                barElement.style.opacity = '1';
+            }
         }
         
-        // Update VRAM display
+        // Update VRAM display (only if changed)
         const vramSpan = barElement.querySelector('.gpu-vram');
-        if (vramSpan) {
-            vramSpan.textContent = `${gpu.vram_used}/${gpu.vram} GB VRAM`;
+        const newVramText = `${gpu.vram_used}/${gpu.vram} GB VRAM`;
+        if (vramSpan && vramSpan.textContent !== newVramText) {
+            vramSpan.textContent = newVramText;
         }
         
         // Update utilization bar
@@ -512,17 +520,25 @@ class UIManager {
         const textElement = barElement.querySelector('.gpu-utilization-text');
         
         if (fillElement) {
-            fillElement.style.width = `${utilPercent}%`;
+            // Only update width if it changed
+            const currentWidth = fillElement.style.width;
+            const newWidth = `${utilPercent}%`;
+            if (currentWidth !== newWidth) {
+                fillElement.style.width = newWidth;
+            }
             
-            // Update high utilization class
-            if (utilPercent > 80 && !fillElement.classList.contains('high')) {
+            // Update high utilization class (only if threshold crossed)
+            const hasHighClass = fillElement.classList.contains('high');
+            const shouldHaveHigh = utilPercent > 80;
+            if (shouldHaveHigh && !hasHighClass) {
                 fillElement.classList.add('high');
-            } else if (utilPercent <= 80 && fillElement.classList.contains('high')) {
+            } else if (!shouldHaveHigh && hasHighClass) {
                 fillElement.classList.remove('high');
             }
         }
         
-        if (textElement) {
+        // Only update text if it changed
+        if (textElement && textElement.textContent !== `${utilPercent}%`) {
             textElement.textContent = `${utilPercent}%`;
         }
     }
@@ -571,6 +587,22 @@ class UIManager {
             // Estimated power cost per hour at 100% utilization
             const estPowerCostHr = (((spec.tdp || 0) / 1000) * (state.pue || 1.45) * 0.15).toFixed(2);
             
+            // Get educational description if available
+            let educationalContent = '';
+            if (window.educationManager) {
+                const eduDesc = educationManager.getGPUDescription(gpuType);
+                if (eduDesc) {
+                    educationalContent = `
+                        <div class="shop-item-description">${eduDesc}</div>
+                        <button class="shop-btn" 
+                                style="background: rgba(168, 85, 247, 0.2); margin-bottom: 8px; font-size: 0.85em; padding: 6px;"
+                                onclick="educationManager.showGPUDetails('${gpuType}')">
+                            📚 Learn More About This GPU
+                        </button>
+                    `;
+                }
+            }
+            
             const item = document.createElement('div');
             item.className = 'shop-item';
             
@@ -586,7 +618,7 @@ class UIManager {
                     </div>
                 </div>
                 ${coolingNote}
-                ${spec.description ? `<div class="shop-item-description">${spec.description}</div>` : ''}
+                ${educationalContent || (spec.description ? `<div class="shop-item-description">${spec.description}</div>` : '')}
                 <button class="shop-btn" 
                         data-action="buy_gpu" 
                         data-gpu-type="${gpuType}"
@@ -910,19 +942,6 @@ class UIManager {
         } else {
             return `InfiniBand/Fabric (${penalty}%)`;
         }
-    }
-    
-    /**
-     * Update phase indicator
-     */
-    updatePhaseIndicator(state) {
-        let phase = 'Phase 1: Desk';
-        if (state.total_revenue >= 150000) {
-            phase = 'Phase 3: Datacenter';
-        } else if (state.total_revenue >= 30000) {
-            phase = 'Phase 2: First Rack';
-        }
-        document.getElementById('phase-indicator').textContent = phase;
     }
     
     /**

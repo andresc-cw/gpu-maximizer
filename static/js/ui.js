@@ -789,7 +789,7 @@ class UIManager {
             return;
         }
         
-        const { current, next, job_spawn_multiplier, job_value_multiplier, sla_extension, level } = state.marketing;
+        const { current, next, job_spawn_multiplier, job_value_multiplier, sla_extension, level, upcoming } = state.marketing;
         
         const jobBoost = ((job_spawn_multiplier - 1) * 100).toFixed(0);
         const valueBoost = ((job_value_multiplier - 1) * 100).toFixed(0);
@@ -841,6 +841,32 @@ class UIManager {
             `;
         }
         
+        // Upcoming preview cards (next 3 levels)
+        if (Array.isArray(upcoming) && upcoming.length > 0) {
+            content += `
+                <div class="marketing-upcoming">
+                    <div class="marketing-upcoming-title">Coming Up</div>
+                    <div class="marketing-preview-grid">
+                        ${upcoming.map(lvl => {
+                            const jb = ((lvl.job_spawn_multiplier - 1) * 100).toFixed(0);
+                            const vb = ((lvl.job_value_multiplier - 1) * 100).toFixed(0);
+                            const sla = lvl.sla_extension && lvl.sla_extension > 0 ? ` | ⏱️ +${lvl.sla_extension}s SLA` : '';
+                            const unlock = typeof lvl.unlock_revenue === 'number' ? `$${this.formatNumber(lvl.unlock_revenue)}` : 'N/A';
+                            const cost = typeof lvl.cost === 'number' ? `$${this.formatNumber(lvl.cost)}` : 'N/A';
+                            return `
+                                <div class="marketing-preview-card">
+                                    <div class="marketing-preview-header">Lvl ${lvl.level}: ${lvl.name}</div>
+                                    <div class="marketing-preview-meta">Unlock: ${unlock} · Cost: ${cost}</div>
+                                    <div class="marketing-preview-boosts">📈 +${jb}% Jobs | 💰 +${vb}% Value${sla}</div>
+                                    <div class="marketing-preview-desc">${lvl.description}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
         content += '</div>';
         container.innerHTML = content;
         

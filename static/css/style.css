@@ -29,6 +29,7 @@ body {
     border-radius: 10px;
     border: 2px solid #0fffff;
     box-shadow: 0 0 20px rgba(15, 255, 255, 0.3);
+    position: relative; /* allow stickers to be positioned */
 }
 
 #header h1 {
@@ -36,6 +37,61 @@ body {
     color: #0fffff;
     text-shadow: 0 0 10px rgba(15, 255, 255, 0.5);
     margin-bottom: 5px;
+}
+
+/* Branding row */
+#header .header-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#header .logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    border-radius: 8px;
+    filter: drop-shadow(0 0 6px rgba(15, 255, 255, 0.6));
+}
+
+/* Sticker layer */
+#sticker-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.sticker {
+    position: absolute;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #0b1026;
+    background: linear-gradient(135deg, #0fffff, #a855f7);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 6px 22px rgba(15, 255, 255, 0.35);
+    text-transform: uppercase;
+}
+
+.sticker-lfg {
+    top: 10px;
+    right: 12px;
+    transform: rotate(9deg);
+}
+
+.sticker-cw {
+    bottom: 10px;
+    left: 16px;
+    transform: rotate(-12deg);
+    background: linear-gradient(135deg, #10b981, #0fffff);
+}
+
+.sticker-gpu {
+    top: 44px;
+    left: -8px;
+    transform: rotate(-18deg);
+    background: linear-gradient(135deg, #8b5cf6, #a855f7);
 }
 
 #phase-indicator {
@@ -978,6 +1034,64 @@ body {
     background: #4b5563;
     color: #6b7280;
     cursor: not-allowed;
+}
+
+/* Marketing Upcoming Preview */
+.marketing-upcoming {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.marketing-upcoming-title {
+    color: #a855f7;
+    font-weight: bold;
+    margin: 4px 0 10px 0;
+    text-align: left;
+}
+
+.marketing-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.marketing-preview-card {
+    background: rgba(45, 53, 97, 0.6);
+    border: 1px solid #2d3561;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.marketing-preview-card:hover {
+    border-color: #0fffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 255, 255, 0.25);
+}
+
+.marketing-preview-header {
+    color: #10b981;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.marketing-preview-meta {
+    color: #9ca3af;
+    font-size: 0.85em;
+    margin-bottom: 6px;
+}
+
+.marketing-preview-boosts {
+    color: #e0e0e0;
+    font-size: 0.9em;
+    margin-bottom: 6px;
+}
+
+.marketing-preview-desc {
+    color: #a0a0a0;
+    font-size: 0.85em;
 }
 
 /* Capacity Panel */

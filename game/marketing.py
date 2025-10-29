@@ -210,11 +210,29 @@ class MarketingManager:
         current = self.get_current_level_data()
         next_level = self.get_next_level_data()
         
+        # Build a small preview of upcoming levels for UI (next 3 levels)
+        upcoming = []
+        if self.level < len(MARKETING_LEVELS) - 1:
+            # Slice the next 3 levels (or fewer if near the end)
+            for lvl in MARKETING_LEVELS[self.level + 1 : self.level + 4]:
+                # Only include fields useful to the UI preview
+                upcoming.append({
+                    'level': lvl.get('level'),
+                    'name': lvl.get('name'),
+                    'description': lvl.get('description'),
+                    'cost': lvl.get('cost'),
+                    'unlock_revenue': lvl.get('unlock_revenue'),
+                    'job_spawn_multiplier': lvl.get('job_spawn_multiplier'),
+                    'job_value_multiplier': lvl.get('job_value_multiplier'),
+                    'sla_extension': lvl.get('sla_extension', 0)
+                })
+        
         return {
             'level': self.level,
             'current': current,
             'next': next_level,
             'job_spawn_multiplier': round(self.get_job_spawn_multiplier(), 2),
             'job_value_multiplier': round(self.get_job_value_multiplier(), 2),
-            'sla_extension': self.get_sla_extension()
+            'sla_extension': self.get_sla_extension(),
+            'upcoming': upcoming
         }

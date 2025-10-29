@@ -115,7 +115,7 @@ gpu-maximizer/
 
 ## 🎮 Controls
 
-- **1x / 2x / 5x** - Game speed controls
+- **1x / 2x / 5x / 20x** - Game speed controls
 - **Reset** - Start over from scratch
 - **Shop Buttons** - Purchase GPUs and upgrades
 
@@ -166,22 +166,6 @@ See the `context/` folder for detailed specifications:
 - `NETWORKING_AND_SCHEDULING_SPECS.md` - Network and scheduler details
 - `COHERENCE_CHECK.md` - Validation of all specs
 
-## 🎯 Hackathon Demo Tips
-
-**3-Minute Demo Flow:**
-1. **Start** - 1 L4 GPU, inference jobs flowing in
-2. **Buy GPUs** - Show auto-scaling (buy 5 GPUs → networking auto-upgrades!)
-3. **Unlock A100** - "Liquid cooling included!" → PUE improves
-4. **Marketing** - Buy Sales Team → job queue floods with customers
-5. **Training Jobs** - Large 4-GPU jobs appear, big payouts
-6. **Show Stats** - "I'm running 20 GPUs, completing 100+ jobs/min!"
-
-**Key Teaching Moments:**
-- "Cooling auto-upgrades when you buy better GPUs" (no fake choices!)
-- "Network improves as cluster grows" (feel the infrastructure scale)
-- "Scheduler auto-unlocks at revenue milestones" (progression feels earned)
-- "Marketing is like Paperclips' trust system" (clear, impactful upgrades)
-
 ## 🤝 Credits
 
 Created for hackathons to teach datacenter GPU management concepts in a fun, interactive way.
@@ -192,7 +176,4 @@ Inspired by [Universal Paperclips](https://www.decisionproblem.com/paperclips/) 
 
 MIT License - Feel free to use for educational purposes!
 
----
-
-**Have fun scaling your GPU empire!** 🚀
 

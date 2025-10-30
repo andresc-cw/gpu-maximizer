@@ -2,46 +2,46 @@
 import random
 import time
 
-# Realistic CoreWeave customers by job type
+# Fictional GPU cloud customers by job type
 INFERENCE_CUSTOMERS = [
-    'Perplexity AI',
-    'Character.AI',
-    'Runway ML',
-    'Hugging Face',
-    'ElevenLabs',
-    'Stability AI'
+    'QueryMind AI',
+    'ChatBuddy Corp',
+    'PixelFlow Studio',
+    'ModelHub Systems',
+    'VoiceGen Labs',
+    'DreamRender AI'
 ]
 
 TRAINING_CUSTOMERS = [
-    'Anthropic',
-    'Cohere',
-    'Waymo',
-    'Midjourney',
-    'Adept AI',
-    'Inflection AI',
-    'OpenAI',
-    'DeepMind'
+    'SafetyFirst AI',
+    'EnterpriseNLP Corp',
+    'AutoDrive Systems',
+    'ArtGen Studio',
+    'AgentFlow AI',
+    'PersonalAI Labs',
+    'NeuralCore Research',
+    'CogniTech Labs'
 ]
 
 # Task descriptions for each customer
 CUSTOMER_TASKS = {
     # Inference customers
-    'Perplexity AI': 'Search Query Processing',
-    'Character.AI': 'Conversational Inference',
-    'Runway ML': 'Video Generation',
-    'Hugging Face': 'Model API Inference',
-    'ElevenLabs': 'Voice Synthesis',
-    'Stability AI': 'Image Generation',
+    'QueryMind AI': 'Search Query Processing',
+    'ChatBuddy Corp': 'Conversational Inference',
+    'PixelFlow Studio': 'Video Generation',
+    'ModelHub Systems': 'Model API Inference',
+    'VoiceGen Labs': 'Voice Synthesis',
+    'DreamRender AI': 'Image Generation',
     
     # Training customers
-    'Anthropic': 'Claude Model Training',
-    'Cohere': 'LLM Fine-tuning',
-    'Waymo': 'Perception Model Training',
-    'Midjourney': 'Diffusion Model Training',
-    'Adept AI': 'Action Transformer Training',
-    'Inflection AI': 'Large-scale Pretraining',
-    'OpenAI': 'Foundation Model Training',
-    'DeepMind': 'Multi-modal Training'
+    'SafetyFirst AI': 'LLM Model Training',
+    'EnterpriseNLP Corp': 'LLM Fine-tuning',
+    'AutoDrive Systems': 'Perception Model Training',
+    'ArtGen Studio': 'Diffusion Model Training',
+    'AgentFlow AI': 'Action Transformer Training',
+    'PersonalAI Labs': 'Large-scale Pretraining',
+    'NeuralCore Research': 'Foundation Model Training',
+    'CogniTech Labs': 'Multi-modal Training'
 }
 
 class Job:

@@ -1331,7 +1331,7 @@ class UIManager {
                 name: 'Enterprise King',
                 description: 'All 4 major contracts active simultaneously!',
                 icon: '🎖️',
-                message: 'OpenAI, Meta, Microsoft, AND Anthropic trust your infrastructure!'
+                message: 'All 4 major enterprise customers trust your infrastructure!'
             },
             'efficiency_master': {
                 name: 'Efficiency Master',

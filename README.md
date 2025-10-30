@@ -82,7 +82,7 @@ This game teaches real datacenter concepts through **gameplay, not menus**:
 - **Network effects**: Larger clusters = better networking
 - **Scheduling**: Auto-unlocks teach different algorithms
 - **Real hardware**: L4, A100, H100, GB200 are actual NVIDIA products
-- **Customer types**: Learn who uses GPU compute (Anthropic, Perplexity, etc.)
+- **Customer types**: Learn who uses GPU compute (search engines, chatbots, autonomous vehicles, etc.)
 
 ## 🏗️ Tech Stack
 

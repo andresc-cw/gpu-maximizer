@@ -1,6 +1,6 @@
 """Marketing and sales system - improves job queue quality and quantity"""
 
-# Marketing levels inspired by CoreWeave's actual marketing evolution
+# Marketing levels inspired by GPU cloud provider marketing evolution
 # Each level represents a realistic stage in cloud GPU provider marketing
 MARKETING_LEVELS = [
     {
@@ -57,8 +57,8 @@ MARKETING_LEVELS = [
     },
     {
         'level': 6,
-        'name': 'Hugging Face Integration',
-        'description': 'Official integration with Hugging Face. Direct pipeline from their platform.',
+        'name': 'ML Platform Integration',
+        'description': 'Official integration with major ML platforms. Direct pipeline from their tools.',
         'cost': 30000,
         'unlock_revenue': 120000,
         'job_spawn_multiplier': 2.0,
@@ -76,7 +76,7 @@ MARKETING_LEVELS = [
     {
         'level': 8,
         'name': 'Case Studies',
-        'description': 'Published customer success stories. "How Anthropic trained Claude on our H100s."',
+        'description': 'Published customer success stories. "How SafetyFirst AI trained models on our H100s."',
         'cost': 50000,
         'unlock_revenue': 250000,
         'job_spawn_multiplier': 2.4,
@@ -85,7 +85,7 @@ MARKETING_LEVELS = [
     {
         'level': 9,
         'name': 'Enterprise Outreach',
-        'description': 'Targeting Fortune 500. Direct line to Meta, OpenAI, Stability AI.',
+        'description': 'Targeting Fortune 500. Direct line to major AI companies.',
         'cost': 75000,
         'unlock_revenue': 350000,
         'job_spawn_multiplier': 2.7,

@@ -1,7 +1,7 @@
 # Contracts System - Implementation Summary
 
 ## Overview
-Added a realistic enterprise contract system inspired by CoreWeave's business model (Meta, Microsoft, OpenAI deals). Players can now sign long-term contracts that **reserve GPU capacity** in exchange for **guaranteed passive income**.
+Added a realistic enterprise contract system inspired by GPU cloud business models. Players can now sign long-term contracts that **reserve GPU capacity** in exchange for **guaranteed passive income**.
 
 ## Core Mechanic: Capacity Management
 
@@ -11,7 +11,7 @@ Added a realistic enterprise contract system inspired by CoreWeave's business mo
 
 This mirrors real GPU cloud provider business models where companies like CoreWeave balance:
 - Spot pricing for startups/researchers (flexible, on-demand)
-- Reserved capacity for enterprise customers (Meta, Microsoft) with long-term commitments
+- Reserved capacity for enterprise customers with long-term commitments
 
 ---
 
@@ -50,7 +50,7 @@ New "🤝 Contracts" tab with three sections:
 
 ### 3. **Four Enterprise Contracts**
 
-#### **OpenAI - Spot Capacity Reserve**
+#### **NeuralCore Research - Spot Capacity Reserve**
 - **Requires:** 20+ GPUs, 10+ H100s, $50K revenue
 - **Reserves:** 20 GPUs
 - **Income:** $8,000/month
@@ -58,7 +58,7 @@ New "🤝 Contracts" tab with three sections:
 - **Duration:** 3 months
 - **Unlocks:** Early game (when you hit 20 GPUs)
 
-#### **Meta - LLaMa 4 Training Cluster**
+#### **PersonalAI Labs - LLM Training Cluster**
 - **Requires:** 50+ GPUs, 40+ H100s, InfiniBand, $200K revenue
 - **Reserves:** 50 GPUs
 - **Income:** $35,000/month
@@ -66,7 +66,7 @@ New "🤝 Contracts" tab with three sections:
 - **Duration:** 6 months
 - **Teaching:** "Big deals need serious infrastructure"
 
-#### **Microsoft - Azure Overflow Capacity**
+#### **CloudAI Systems - Overflow Capacity Reserve**
 - **Requires:** 100+ GPUs, 80+ H100s, InfiniBand, Liquid Cooling, $500K revenue
 - **Reserves:** 100 GPUs
 - **Income:** $95,000/month
@@ -74,7 +74,7 @@ New "🤝 Contracts" tab with three sections:
 - **Duration:** 12 months
 - **Teaching:** "Enterprise contracts = whale deals"
 
-#### **Anthropic - Claude Training Reserve**
+#### **SafetyFirst AI - LLM Training Reserve**
 - **Requires:** 150+ GPUs, 120+ H100s, NVLink Fabric, Liquid Cooling, $1M revenue
 - **Reserves:** 150 GPUs
 - **Income:** $180,000/month
@@ -89,22 +89,22 @@ New "🤝 Contracts" tab with three sections:
 ### **Phase 1: Early Game (1-20 GPUs)**
 - Focus on spot market jobs
 - Build up infrastructure
-- OpenAI contract appears at 20 GPUs
+- First enterprise contract appears at 20 GPUs
 
 ### **Phase 2: First Contract (20-50 GPUs)**
-- Decide: "Should I sign OpenAI deal?"
+- Decide: "Should I sign first enterprise deal?"
 - If yes: Invest $15K, reserve 20 GPUs, get $8K/month passive
 - Trade-off: Less flexibility but stable income
 - **Teaching moment:** "Why is my queue backing up? Oh, 20 GPUs are reserved!"
 
 ### **Phase 3: Scaling (50-100 GPUs)**
-- Meta deal unlocks
+- Second contract unlocks
 - Need InfiniBand to qualify
 - Bigger decision: Lock 50 GPUs for $35K/month?
 - Balancing act: Reserve vs. spot market
 
 ### **Phase 4: Enterprise Scale (100+ GPUs)**
-- Microsoft and Anthropic deals unlock
+- Larger enterprise deals unlock
 - Strategic choices: "Can I afford to reserve 100 GPUs?"
 - Passive income becomes significant portion of revenue
 - **Real business model:** Mix of reserved and spot capacity
@@ -164,13 +164,13 @@ New "🤝 Contracts" tab with three sections:
 "Do I reserve GPUs for guaranteed income or keep them flexible for spot market?"
 
 ### **2. Infrastructure Requirements**
-"I can't land the Meta deal without 50 H100s and InfiniBand!"
+"I can't land the second contract without 50 H100s and InfiniBand!"
 
 ### **3. Long-term Planning**
 "Contracts last 3-18 months. This is a strategic commitment."
 
 ### **4. Real Business Model**
-"CoreWeave's actual business is balancing spot pricing vs. reserved capacity for customers like Microsoft and Meta."
+"GPU cloud business models balance spot pricing vs. reserved capacity for major enterprise customers."
 
 ### **5. Growth Pressure**
 "My contract expires in 1 month. Do I renew or go back to spot market?"
@@ -189,7 +189,7 @@ New "🤝 Contracts" tab with three sections:
 ### **Contract Card (Active)**
 ```
 ┌─────────────────────────────────────┐
-│ 🔷 Meta                    [ACTIVE] │
+│ 🔷 PersonalAI Labs         [ACTIVE] │
 │ LLaMa 4 Training Cluster            │
 │                                      │
 │ Reserves: 50 GPUs  | Income: $35K/mo│
@@ -204,7 +204,7 @@ New "🤝 Contracts" tab with three sections:
 ### **Contract Card (Negotiating)**
 ```
 ┌─────────────────────────────────────┐
-│ 🔷 Meta              [NEGOTIATING]  │
+│ 🔷 PersonalAI Labs   [NEGOTIATING]  │
 │ LLaMa 4 Training Cluster            │
 │                                      │
 │ Progress: 60%    $24K / $40K        │
@@ -228,10 +228,10 @@ New "🤝 Contracts" tab with three sections:
   - Strategic depth (long-term commitment)
 
 ### **Negotiation Costs**
-- OpenAI: $15K (5-10 jobs worth)
-- Meta: $40K (20-30 jobs worth)
-- Microsoft: $100K (serious investment)
-- Anthropic: $200K (endgame)
+- NeuralCore Research: $15K (5-10 jobs worth)
+- PersonalAI Labs: $40K (20-30 jobs worth)
+- CloudAI Systems: $100K (serious investment)
+- SafetyFirst AI: $200K (endgame)
 
 Player must **invest upfront** to unlock passive income stream.
 
@@ -240,7 +240,7 @@ Player must **invest upfront** to unlock passive income stream.
 ## Future Enhancements (Optional)
 
 ### **Contract Renewals**
-- "Your Meta contract expires in 30 seconds. Renew for $10K?"
+- "Your PersonalAI Labs contract expires in 30 seconds. Renew for $10K?"
 
 ### **SLA Penalties**
 - Miss uptime requirements → lose contract income
@@ -249,21 +249,21 @@ Player must **invest upfront** to unlock passive income stream.
 - Contract income increases if you have rare GPUs (B200, GB200)
 
 ### **Multiple Active Contracts**
-- Sign OpenAI + Meta simultaneously
+- Sign multiple contracts simultaneously
 - Complex capacity juggling
 
 ### **Contract Events**
-- "Meta wants to extend contract for 3 more months at +20% income"
-- "Microsoft is unhappy with uptime, -10% income penalty"
+- "PersonalAI Labs wants to extend contract for 3 more months at +20% income"
+- "CloudAI Systems is unhappy with uptime, -10% income penalty"
 
 ---
 
 ## Testing the Feature
 
 1. **Start game** - Navigate to http://localhost:5000
-2. **Buy GPUs** - Get 20+ GPUs to unlock OpenAI contract
+2. **Buy GPUs** - Get 20+ GPUs to unlock first enterprise contract
 3. **Open Contracts tab** - Click "🤝 Contracts" in shop
-4. **Start negotiation** - Click "Start Negotiation" on OpenAI
+4. **Start negotiation** - Click "Start Negotiation" on available contract
 5. **Invest money** - Click "Invest $5K" 3 times (total $15K)
 6. **Contract activates** - See 20 GPUs reserved, capacity bar updates
 7. **Passive income** - Watch cash increase from contract income
@@ -277,7 +277,7 @@ Player must **invest upfront** to unlock passive income stream.
 ✅ **Simple mechanic:** Reserve GPUs = passive income
 ✅ **Strategic depth:** Flexibility vs. guaranteed revenue
 ✅ **Educational:** Teaches enterprise GPU cloud economics
-✅ **Fun trade-offs:** "Do I sign the Meta deal or stay flexible?"
+✅ **Fun trade-offs:** "Do I sign the enterprise deal or stay flexible?"
 
 The contracts system adds a **second revenue stream** and forces players to make **strategic capacity decisions** just like real GPU cloud providers!
 

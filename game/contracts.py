@@ -1,14 +1,14 @@
 """Enterprise contract system"""
 import time
 
-# Contract definitions based on real CoreWeave deals
+# Contract definitions for enterprise GPU deals
 CONTRACTS_CATALOG = {
     'openai_spot': {
         'id': 'openai_spot',
-        'name': 'OpenAI',
+        'name': 'NeuralCore Research',
         'title': 'Spot Capacity Reserve',
         'description': 'Reserved spot capacity for inference bursts',
-        'customer_logo': 'https://logo.clearbit.com/openai.com',
+        'customer_logo': '🔷',
         'requires': {
             'min_gpus': 20,
             'min_h100s': 10,
@@ -24,10 +24,10 @@ CONTRACTS_CATALOG = {
     },
     'meta_llama': {
         'id': 'meta_llama',
-        'name': 'Meta',
-        'title': 'LLaMa 4 Training Cluster',
+        'name': 'PersonalAI Labs',
+        'title': 'LLM Training Cluster',
         'description': 'Dedicated cluster for next-gen LLM training',
-        'customer_logo': 'https://logo.clearbit.com/meta.com',
+        'customer_logo': '🟦',
         'requires': {
             'min_gpus': 50,
             'min_h100s': 40,
@@ -43,10 +43,10 @@ CONTRACTS_CATALOG = {
     },
     'microsoft_azure': {
         'id': 'microsoft_azure',
-        'name': 'Microsoft',
-        'title': 'Azure Overflow Capacity',
-        'description': 'Emergency overflow for Azure AI services',
-        'customer_logo': 'https://logo.clearbit.com/microsoft.com',
+        'name': 'CloudAI Systems',
+        'title': 'Overflow Capacity Reserve',
+        'description': 'Emergency overflow for enterprise AI services',
+        'customer_logo': '🔶',
         'requires': {
             'min_gpus': 100,
             'min_h100s': 80,
@@ -63,10 +63,10 @@ CONTRACTS_CATALOG = {
     },
     'anthropic_claude': {
         'id': 'anthropic_claude',
-        'name': 'Anthropic',
-        'title': 'Claude Training Reserve',
-        'description': 'Long-term reserved capacity for Claude development',
-        'customer_logo': 'https://logo.clearbit.com/anthropic.com',
+        'name': 'SafetyFirst AI',
+        'title': 'LLM Training Reserve',
+        'description': 'Long-term reserved capacity for large model development',
+        'customer_logo': '🟪',
         'requires': {
             'min_gpus': 150,
             'min_h100s': 120,

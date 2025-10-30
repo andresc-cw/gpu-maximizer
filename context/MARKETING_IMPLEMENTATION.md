@@ -35,7 +35,7 @@ Implemented a simple, progressive marketing system inspired by Universal Papercl
 - Sponsored ML conference booth
 - +75% job volume, +30% job value
 
-### Level 6: Hugging Face Integration ($30K, unlock at $120K revenue)
+### Level 6: ML Platform Integration ($30K, unlock at $120K revenue)
 - Official platform integration
 - +100% job volume (2x), +40% job value
 

@@ -18,11 +18,11 @@ This document contains detailed educational content for every shop item, designe
 **What Makes It Special:**
 - **Energy Champion:** 72W TDP means you can run dozens without melting your datacenter
 - **Ada Architecture:** First gen with 4th-gen Tensor Cores supporting FP8 precision
-- **Inference King:** Optimized for real-time inference (think Perplexity's search queries)
+- **Inference King:** Optimized for real-time inference (think search engine queries)
 - **PCIe Only:** No NVLink, but at this price point, who cares?
 
 **Real-World Use:**
-CoreWeave customers use L4s for burst inference capacity—when Character.AI goes viral, they spin up hundreds of L4 instances instantly.
+GPU cloud customers use L4s for burst inference capacity—when chatbot services go viral, they spin up hundreds of L4 instances instantly.
 
 **Technical Tidbit:**
 The L4's NVENC engine can transcode 140 streams of 1080p30 video simultaneously, making it secretly amazing for video analytics pipelines!
@@ -44,7 +44,7 @@ The L4's NVENC engine can transcode 140 streams of 1080p30 video simultaneously,
 - **Studio Darling:** Framestore uses these for real-time Unreal Engine VFX previews
 
 **Real-World Use:**
-DNEG (VFX studio) uses L40S clusters to render "Dune" VFX during the day, then switches to fine-tuning Stable Diffusion models at night. GPU utilization: 💯
+VFX studios use L40S clusters to render movie effects during the day, then switch to fine-tuning AI models at night. GPU utilization: 💯
 
 **Technical Tidbit:**
 The L40S has 18,176 CUDA cores—exactly 2.37x more than the L4. NVIDIA's die binning process is *chef's kiss*.
@@ -57,7 +57,7 @@ The L40S has 18,176 CUDA cores—exactly 2.37x more than the L4. NVIDIA's die bi
 **Specs:** 80GB HBM2e, 300W TDP, 6,912 CUDA cores
 
 **Educational Blurb:**
-"The A100 is the GPU that made AI go mainstream. Released in 2020, it powered GPT-3's training and every major LLM since. HBM2e memory at 2TB/s bandwidth means this thing feeds data to tensor cores faster than you can say 'attention is all you need.' Multi-Instance GPU (MIG) lets you slice one A100 into 7 isolated GPUs—perfect for multi-tenant cloud environments (hi, CoreWeave!)."
+"The A100 is the GPU that made AI go mainstream. Released in 2020, it powered major LLM training breakthroughs. HBM2e memory at 2TB/s bandwidth means this thing feeds data to tensor cores faster than you can say 'attention is all you need.' Multi-Instance GPU (MIG) lets you slice one A100 into 7 isolated GPUs—perfect for multi-tenant cloud environments."
 
 **What Makes It Special:**
 - **MIG Technology:** Partition into 7 independent GPU instances (game-changer for cloud)
@@ -66,7 +66,7 @@ The L40S has 18,176 CUDA cores—exactly 2.37x more than the L4. NVIDIA's die bi
 - **NVLink Gen 3:** 600GB/s bidirectional between GPUs—build giant model clusters
 
 **Real-World Use:**
-Anthropic trained Claude 1.0 on A100 clusters. Cohere's production inference still runs on A100s because "if it ain't broke..."
+Major AI companies trained large language models on A100 clusters. Many production inference services still run on A100s because "if it ain't broke..."
 
 **Technical Tidbit:**
 The A100's Tensor Cores can perform 312 TFLOPS of FP16 compute—that's 312 TRILLION floating-point operations per second. Your calculator does ~0.00001 TFLOPS. 🤯
@@ -88,7 +88,7 @@ The A100's Tensor Cores can perform 312 TFLOPS of FP16 compute—that's 312 TRIL
 - **DPX Instructions:** Hardware acceleration for dynamic programming algorithms
 
 **Real-World Use:**
-Meta trained LLaMA 2 70B on H100 clusters. OpenAI's GPT-4 inference runs on H100s. CoreWeave's H100 pods power Inflection AI's Pi assistant.
+Major AI companies trained large models on H100 clusters. State-of-the-art LLM inference runs on H100s deployed across GPU cloud providers.
 
 **Technical Tidbit:**
 One H100 can perform 2 PETAFLOPS of FP8 tensor operations. That's 2,000 TERAFLOPS. That's 2,000,000 GIGAFLOPS. Absolute unit.
@@ -113,7 +113,7 @@ At 700W, you can fry 7 eggs simultaneously on an H100's heatsink. Don't try this
 - **Inference Beast:** 1.9x faster inference on GPT-3 compared to H100
 
 **Real-World Use:**
-CoreWeave was FIRST to market with H200 instances (Dec 2023). Customers use them for serving 70B models that previously required multi-GPU setups.
+GPU cloud providers deployed H200 instances starting in late 2023. Customers use them for serving 70B models that previously required multi-GPU setups.
 
 **Technical Tidbit:**
 HBM3e's "e" stands for "extreme"—SK Hynix engineers achieved 1.15Tb/s per stack, a 50% improvement over base HBM3. Materials science wizardry!
@@ -160,7 +160,7 @@ Blackwell's dies communicate via 10TB/s—that's faster than NVLink between sepa
 - **Liquid Cooling Only:** 1200W TDP—this is a space heater masquerading as a computer
 
 **Real-World Use:**
-The GB200 NVL72 rack (72 GB200s) offers 720 petaFLOPS—enough to train foundation models in record time. CoreWeave is deploying these for frontier AI workloads.
+The GB200 NVL72 rack (72 GB200s) offers 720 petaFLOPS—enough to train foundation models in record time. GPU cloud providers are deploying these for frontier AI workloads.
 
 **Technical Tidbit:**
 Grace CPU's 72 cores might sound modest, but each core has 4MB of L2 cache (288MB total). That's more cache than most desktop CPUs have L3!
@@ -401,7 +401,7 @@ H100 clusters use NVIDIA Quantum-2 InfiniBand switches (400 Gbps NDR). Multi-nod
 - Memory coherence: Treat 27TB of HBM (144× 192GB) as unified pool
 
 **Real-World Deployment:**
-The NVL72 rack is a liquid-cooled 10U unit consuming 120kW under full load. CoreWeave is deploying dozens of these for frontier AI workloads (GPT-5 training, etc.).
+The NVL72 rack is a liquid-cooled 10U unit consuming 120kW under full load. GPU cloud providers are deploying dozens of these for frontier AI workloads.
 
 **The $100K Reality:**
 - NVSwitch spine: $30-40K

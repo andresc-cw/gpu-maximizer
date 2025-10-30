@@ -16,8 +16,8 @@ class EducationManager {
                 long: `<strong>The Humble L4</strong><br>
                     Don't let the 72W TDP fool you—Ada Lovelace's efficiency makes this GPU punch way above its weight class. 
                     Built on a 4nm process, it's perfect for inference workloads like Stable Diffusion or small LLM serving.<br><br>
-                    <strong>Real-World Use:</strong> CoreWeave customers use L4s for burst inference capacity—when Character.AI 
-                    goes viral, they spin up hundreds of L4 instances instantly.<br><br>
+                    <strong>Real-World Use:</strong> GPU cloud customers use L4s for burst inference capacity—when 
+                    chatbot services go viral, they spin up hundreds of L4 instances instantly.<br><br>
                     <strong>Fun Fact:</strong> You can fit 10 L4s in a standard 1U server while consuming less power than two H100s!`
             },
             'L40S': {
@@ -25,8 +25,8 @@ class EducationManager {
                 long: `<strong>The Versatile L40S</strong><br>
                     With 48GB of VRAM, you can actually fit some decent models in memory without resorting to model sharding trickery. 
                     Ada's RT cores + Tensor cores = graphics AND AI workloads.<br><br>
-                    <strong>Real-World Use:</strong> DNEG (VFX studio) uses L40S clusters to render "Dune" VFX during the day, 
-                    then switches to fine-tuning Stable Diffusion models at night. GPU utilization: 💯<br><br>
+                    <strong>Real-World Use:</strong> VFX studios use L40S clusters to render movie effects during the day, 
+                    then switch to fine-tuning AI models at night. GPU utilization: 💯<br><br>
                     <strong>Tech Detail:</strong> 18,176 CUDA cores—exactly 2.37x more than the L4. NVIDIA's die binning is chef's kiss.`
             },
             'A100': {
@@ -35,9 +35,9 @@ class EducationManager {
                     Released in 2020, the A100 powered GPT-3's training and every major LLM since. HBM2e memory at 2TB/s bandwidth 
                     means this thing feeds data to tensor cores faster than you can say "attention is all you need."<br><br>
                     <strong>Multi-Instance GPU (MIG):</strong> Slice one A100 into 7 isolated GPUs—perfect for multi-tenant 
-                    cloud environments (hi, CoreWeave!).<br><br>
-                    <strong>Real-World Use:</strong> Anthropic trained Claude 1.0 on A100 clusters. Cohere's production inference 
-                    still runs on A100s because "if it ain't broke..."<br><br>
+                    cloud environments.<br><br>
+                    <strong>Real-World Use:</strong> Major AI companies trained large language models on A100 clusters. Many production 
+                    inference services still run on A100s because "if it ain't broke..."<br><br>
                     <strong>Mind-Blowing Stat:</strong> 312 TFLOPS of FP16 compute. That's 312 TRILLION operations per second!`
             },
             'H100': {
@@ -59,7 +59,7 @@ class EducationManager {
                     (vs 3.35TB/s). That 141GB is the magic number—it can fit LLaMA 2 70B in FP16 with room to spare!<br><br>
                     <strong>Why It Matters:</strong> No tensor parallelism required for 70B models. What previously needed 
                     multi-GPU setups now fits on one H200.<br><br>
-                    <strong>Real-World Use:</strong> CoreWeave was FIRST to market with H200 instances (Dec 2023). 
+                    <strong>Real-World Use:</strong> Major GPU cloud providers deployed H200 instances starting in late 2023. 
                     Customers use them for serving 70B models efficiently.<br><br>
                     <strong>Tech Tidbit:</strong> HBM3e's "e" stands for "extreme"—SK Hynix engineers achieved 1.15Tb/s per stack, 
                     a 50% improvement over base HBM3!`
@@ -85,7 +85,7 @@ class EducationManager {
                     Designed for trillion-parameter models that don't fit anywhere else.<br><br>
                     <strong>No PCIe:</strong> CPU-GPU connected via 900GB/s NVLink-C2C—50x faster than PCIe 5.0.<br><br>
                     <strong>Real-World Use:</strong> The GB200 NVL72 rack (72 GB200s) offers 720 petaFLOPS—enough to train 
-                    foundation models in record time. CoreWeave is deploying these for frontier AI workloads.<br><br>
+                    foundation models in record time. GPU cloud providers are deploying these for frontier AI workloads.<br><br>
                     <strong>Cooling Reality:</strong> At 1200W, one GB200 consumes more power than 16 L4 GPUs combined!`
             }
         };
@@ -172,7 +172,7 @@ class EducationManager {
                         • Contracts run for a fixed duration
                     </p>
                     <div style="background: rgba(139, 92, 246, 0.1); padding: 12px; border-radius: 6px; border-left: 3px solid #8b5cf6;">
-                        <strong>💼 Real World:</strong> CoreWeave signs contracts with AI companies for thousands of GPUs at a time. 
+                        <strong>💼 Real World:</strong> GPU cloud providers sign contracts with AI companies for thousands of GPUs at a time. 
                         These long-term commitments help datacenters predict revenue and plan infrastructure expansion.
                     </div>`
             },

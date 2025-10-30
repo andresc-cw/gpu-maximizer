@@ -23,7 +23,7 @@ LATER:
 
 DONE:
 - Fixed speed mechanic (1x/2x/5x) to work like Universal Paperclips - everything speeds up proportionally
-- Added real company logos to contracts (OpenAI, Meta, Microsoft, Anthropic)
+- Added company logos to enterprise contracts (fictional companies)
 - Marketing tab -> improve the job queue ✅
     - Created 15 marketing upgrades (Account Execs, CMO, DevRel, conferences, billboards, etc.)
     - Upgrades increase job spawn rate (+15% to +40%)
